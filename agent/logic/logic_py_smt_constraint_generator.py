@@ -10,6 +10,8 @@ from typing import Optional, Union
 from agent.codegen.indent import _INDENT, Indent
 from agent.logic.logic_py_smt_data_structure_generator import _UNIVERSE_CLASS_NAME
 
+from agent.symex.boolean import FALSE_NAME, TRUE, TRUE_NAME
+from agent.symex.collect_unique_ids import SOME
 from agent.symex.scope import ScopeManager
 
 from libcst import (
@@ -77,9 +79,6 @@ _INDEX_SUFFIX: str = "_index"
 # Name of the premise function in conclusion check.
 _PREMISE: str = "premise"
 
-# Python expression representing `True`. This is the default for branch guards.
-_TRUE: BaseExpression = Name("True")
-
 
 class LogicPySMTConstraintGenerator(CSTVisitor):
     """
@@ -100,7 +99,7 @@ class LogicPySMTConstraintGenerator(CSTVisitor):
         self.__ancestors_per_class: dict[str, set[str]] = ancestors_per_class
         self.__body: str = ""
         self.__negated_body_template: str = ""
-        self.__branch_guard: BaseExpression = _TRUE
+        self.__branch_guard: BaseExpression = TRUE
         self.__indent = Indent()
         self.__in_tmp_counter: int = 0
         self.__is_in_function: bool = False
@@ -115,7 +114,7 @@ class LogicPySMTConstraintGenerator(CSTVisitor):
         return False
 
     def visit_Assert(self, node: Assert) -> Optional[bool]:
-        if self.__branch_guard != _TRUE:
+        if self.__branch_guard != TRUE:
             self.__append_line("(=>", False)
             self.__indent.indent()
             self.__append("")
@@ -137,7 +136,7 @@ class LogicPySMTConstraintGenerator(CSTVisitor):
             if isinstance(func, Name):
                 name: str = func.value
                 self.__scope_manager.declare_variable(name)
-                if name == "some":
+                if name == SOME:
                     self.__scope_manager.declare_variable(f"{name}{_INDEX_SUFFIX}")
                     sequence: BaseExpression = value.args[0].value
 
@@ -281,7 +280,7 @@ class LogicPySMTConstraintGenerator(CSTVisitor):
                 tmp_var = Name(f"__logicpy_in_tmp_{self.__in_tmp_counter}")
                 self.__in_tmp_counter += 1
                 target = AssignTarget(tmp_var)
-                some_func = Name("some")
+                some_func = Name(SOME)
                 some = Call(some_func, [Arg(right)])
                 assign = Assign([target], some)
                 equal_to = Comparison(tmp_var, [ComparisonTarget(Equal(), left)])
@@ -485,16 +484,16 @@ class LogicPySMTConstraintGenerator(CSTVisitor):
         if self.__is_in_function:
             value: str = node.value
             smt_value: str
-            if value == "False":
+            if value == FALSE_NAME:
                 smt_value = "false"
-            elif value == "True":
+            elif value == TRUE_NAME:
                 smt_value = "true"
             else:
                 smt_value = self.__scope_manager.get_qualified_name(value)
             self.__append(smt_value, False)
 
     def visit_Pass(self, node: Pass) -> Optional[bool]:
-        Assert(_TRUE).visit(self)
+        Assert(TRUE).visit(self)
 
     def visit_SimpleString(self, node: SimpleString) -> Optional[bool]:
         self.__append(f'"{node.evaluated_value}"', False)
@@ -638,7 +637,7 @@ class LogicPySMTConstraintGenerator(CSTVisitor):
             lhs (BaseExpression): Left-hand side of conjunction.
             rhs (BaseExpression): Right-hand side of conjunction.
         """
-        if lhs is _TRUE:
+        if lhs is TRUE:
             return rhs
 
         return BooleanOperation(lhs, And(), rhs)

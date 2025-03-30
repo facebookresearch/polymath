@@ -739,11 +739,6 @@ def conclusion(universe: Universe) -> None:
     async def test_recursion_bug(self) -> None:
         await self.__test_harness(
             """
-E = typing.TypeVar("E")
-def some(elements: list[E]) -> E:
-    return elements[0]
-
-
 class Being:
     name: Unique[str]
 
@@ -911,6 +906,98 @@ def premise(universe: Universe) -> None:
                 )
               )
               true
+            )
+          )
+        )
+      )
+    )
+  )
+)
+
+(check-sat)
+
+(push)
+
+(check-sat)
+(pop)
+
+(assert
+)
+(check-sat)
+""",
+        )
+
+    async def test_lightweight_id(self) -> None:
+        await self.__test_harness(
+            """
+class Person:
+    name: Unique[str]
+    age: int
+
+class Universe:
+    persons: list[Person]
+
+def premise(universe: Universe) -> None:
+    peter = some(universe.persons)
+    assert peter.name == "Peter"
+    assert peter.age == 35
+    for person in universe.persons:
+        if person.age > 30:
+            assert person.name == "Peter"
+        if person.name == "Peter":
+            assert person.age > 30
+        if person.name == peter.name:
+            assert person.age > 31
+""",
+            """(assert
+  (and
+    (=
+      (__attribute_Person_name 0)
+      "Peter"
+    )
+    (=
+      (__attribute_Person_age 0)
+      35
+    )
+    (forall
+      ((__0__0__person_index Int))
+      (let
+        ((__0__0__person (__attribute_Universe_persons __0__0__person_index)))
+        (and
+          (and
+            (=>
+              (>
+                (__attribute_Person_age __0__0__person)
+                30
+              )
+              (=
+                __0__0__person
+                0
+              )
+            )
+          )
+          (and
+            (=>
+              (=
+                __0__0__person
+                0
+              )
+              (>
+                (__attribute_Person_age __0__0__person)
+                30
+              )
+            )
+          )
+          (and
+            (=>
+              (=
+                __0__0__person
+                0
+              )
+              (>
+                (__attribute_Person_age __0__0__person)
+                31
+              )
             )
           )
         )

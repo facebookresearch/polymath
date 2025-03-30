@@ -356,6 +356,8 @@ async def main():
             model[0],
             model[1],
             model[2],
+            True,
+            True,
         ) as benchmark:
             await benchmark.run()
 

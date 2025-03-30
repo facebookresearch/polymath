@@ -14,6 +14,19 @@ from agent.logic.logic_py_smt_harness_generator import LogicPySMTHarnessGenerato
 from libcst import MetadataWrapper, Module
 
 
+# Prefix containing Logic.py helper functions that do not exist in standard
+# Python. These are included to provide information for type checkers, their
+# semantics are explicitly modelled in symbolic exeuction.
+_PYTHON_CODE_PREFIX: str = """E = typing.TypeVar("E")
+def some(elements: list[E]) -> E:
+    return elements[0]
+
+T = typing.TypeVar("T")
+class Unique(typing.Generic[T]):
+    pass
+
+"""
+
 # Message sent to the model to generate the second (conclusion) constraint.
 _CONCLUSION_MESSAGE: str = """Now create the `conclusion` function in the same manner for the conclusion in the logic question:
 
@@ -282,11 +295,7 @@ class Z3ConclusionCheckEngineStrategy(EngineStrategy):
 
     @property
     def python_code_prefix(self) -> str:
-        return """E = typing.TypeVar("E")
-def some(elements: list[E]) -> E:
-    return elements[0]
-
-"""
+        return _PYTHON_CODE_PREFIX
 
     @property
     def retry_prompt(self) -> str:

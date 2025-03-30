@@ -34,7 +34,7 @@ class ScopeManager:
     def __init__(self) -> None:
         self.__scopes: list[_Scope] = [_Scope(0, "")]
         self.__next_scope_id: int = 0
-        self.__current_scope_prefix: str = "__"
+        self.__current_scope_prefix: str = _SCOPE_SEP
 
     def begin_scope(self) -> None:
         """
@@ -82,3 +82,16 @@ class ScopeManager:
         Sets a custom user value associated with the current scope.
         """
         self.__scopes[-1].context[name] = value
+
+    @staticmethod
+    def to_unqualified_name(qualified_name: str) -> str:
+        """
+        Converts qualified names to local names that can be used in CST nodes.
+
+        Args:
+            qualified_name (str): Scoped qualified name.
+        Returns:
+            Original CST node name.
+        """
+        offset: int = qualified_name.rfind(_SCOPE_SEP)
+        return qualified_name if offset == -1 else qualified_name[offset:]

@@ -18,7 +18,7 @@ from libcst import MetadataWrapper, Module
 _CONSTRAINTS_MESSAGE: str = """Now you must generate a validation function which contains constraints that assert that a given solution is correct. Your solver tool will then find a solution which satisfies your constraints and thus solve the puzzle. Please adhere to the following rules:
 
 * Express your constraints in Python, but do not use any loops or comprehensions.
-* Do not generate constraints that are already enforced by the data type you selected, e.g. if a data type is marked as `unique` you do not need to generate an explicit constraint for this anymore.
+* Do not generate constraints that are already enforced by the data type you selected, e.g. if a data type is marked as `Unique` you do not need to generate an explicit constraint for this anymore.
 * Be consistent! If a class has an explicit `id` or similar field, always use that field when expressing constraints, not the element's location in a container. You cannot assume that its order in a container matches this field, since that order may be non-deterministic to your solver tool.
 * To find elements in a collection with specific characteristics, you can use free variables and assumptions instead. Here are a few examples:
 

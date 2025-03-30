@@ -31,6 +31,9 @@ from libcst import (
 from libcst.metadata import TypeInferenceProvider
 
 
+# Function used for existential quantification in Logic.py
+SOME: str = "some"
+
 # Types that we support for `Unique[...]` attributes.
 _SupportedUniqueIdTypes: TypeAlias = Union[str, int, float, bool]
 
@@ -140,7 +143,7 @@ class CollectUniquelyIdentifiedVars(CSTVisitor):
             qualified_name: str = self.__scope_manager.get_qualified_name(var)
             if isinstance(value, Call):
                 func: BaseExpression = value.func
-                if isinstance(func, Name) and func.value == "some":
+                if isinstance(func, Name) and func.value == SOME:
                     arg: BaseExpression = value.args[0].value
                     self.__name_to_universe_collection[qualified_name] = arg
 
