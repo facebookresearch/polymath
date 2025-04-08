@@ -172,6 +172,7 @@ class TestZebraBenchmark(IsolatedAsyncioTestCase):
                 "llama3-70b-instruct",
                 False,
                 False,
+                None,
                 lambda task: task["id"] == "lgp-test-5x6-16",
             )
             await zebraBenchmark.run()

@@ -52,6 +52,7 @@ class ZebraBenchmark:
         model_name: str,
         enable_stderr_log: bool = True,
         generate_training_data: bool = False,
+        zebra_input_dataset_path: Optional[str] = None,
         filter_dataset: Callable[[dict[str, Any]], bool] = lambda task: True,
     ) -> None:
         """
@@ -62,6 +63,12 @@ class ZebraBenchmark:
             enable_stderr_log (bool): Indicates whether log messages should be
             writting to stderr as well as the result JSON. Disabled for unit
             tests.
+            generate_training_data (bool): Indicates whether we are evaluating
+            against a Zebra benchmark, or whether we are generating training
+            data using Logic.py.
+            zebra_input_dataset_path (Optional[str]): Zebra logic dataset used
+            as a benchmark or to generate training data. If not set, the
+            default ZebraLogicBench dataset is used.
             filter_dataset (Callable[[Any], Any]): Filter to select which tasks
             from the benchmark set to run.
         """
@@ -82,10 +89,13 @@ class ZebraBenchmark:
             create_sample_output_converter()
         )
 
-        module_path: str = os.path.dirname(__file__)
-        self.__zebra_input_dataset_path: str = os.path.join(
-            module_path, "../../datasets/grid_mode/test-00000-of-00001.parquet"
-        )
+        if zebra_input_dataset_path is not None:
+            self.__zebra_input_dataset_path: str = zebra_input_dataset_path
+        else:
+            module_path: str = os.path.dirname(__file__)
+            self.__zebra_input_dataset_path: str = os.path.join(
+                module_path, "../../datasets/grid_mode/test-00000-of-00001.parquet"
+            )
 
     async def __aenter__(self) -> "ZebraBenchmark":
         if self.__output_dataset_context:
@@ -107,7 +117,7 @@ class ZebraBenchmark:
         """
         Runs all Zebra puzzles specified in the input dataset JSON file.
         """
-        pool = AsyncPool(100)
+        pool = AsyncPool(10)
         eval_json: list[dict[str, Any]] = []
         dataset = ParquetFile(self.__zebra_input_dataset_path)
         for row_group_index in range(dataset.num_row_groups):
@@ -346,6 +356,9 @@ async def main():
             model[0],
             model[1],
             model[2],
+            True,
+            True,
+            "/mnt/wsfuse/users/pkesseli/reasoning/zebra_puzzles_tudor_train.parquet",
         ) as benchmark:
             await benchmark.run()
 
