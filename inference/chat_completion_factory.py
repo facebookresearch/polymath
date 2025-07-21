@@ -16,14 +16,14 @@ DEFAULT_MAX_TOKENS: int = 0
 # DEFAULT_MAX_TOKENS: int = 131072
 
 # Default max output tokens to use for LLM inference.
-DEFAULT_MAX_GEN_TOKENS: int = 0
+DEFAULT_MAX_GEN_TOKENS: int = 2248
 
 # Default temperature to use for LLM inference.
-DEFAULT_TEMPERATURE: float = 0.5
+DEFAULT_TEMPERATURE: float = 1e-5
 
 
 def create_chat_completion(
-    logger_factory: LoggerFactory, model_name: str
+        logger_factory: LoggerFactory, model_name: str, gpu_id: int = 0,
 ) -> ChatCompletion:
     """
     Default factory for chat completion API. Modifying this method allows to
@@ -48,14 +48,14 @@ def create_chat_completion(
             logger_factory,
             model_name,
             DEFAULT_MAX_GEN_TOKENS,
-            DEFAULT_MAX_TOKENS,
             DEFAULT_TEMPERATURE,
+            gpu_id = gpu_id
         )
 
     return DummyChatCompletion(
         logger_factory,
         model_name,
         DEFAULT_MAX_GEN_TOKENS,
-        DEFAULT_MAX_TOKENS,
         DEFAULT_TEMPERATURE,
+        gpu_id = gpu_id,
     )

@@ -1,0 +1,3515 @@
+[
+  {
+    "program": "CBMC 6.6.0 (cbmc-6.6.0)"
+  },
+  {
+    "messageText": "CBMC version 6.6.0 (cbmc-6.6.0) 64-bit arm64 macos",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "Type-checking test",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "Generating GOTO Program",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "Adding CPROVER library (arm64)",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "Removal of function pointers and virtual functions",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "Generic Property Instrumentation",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "Starting Bounded Model Checking",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "Passing problem to propositional reduction",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "converting SSA",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "Running propositional reduction",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "SAT checker: instance is SATISFIABLE",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "messageText": "Building error trace",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "result": [
+      {
+        "description": "assertion",
+        "property": "main.assertion.1",
+        "sourceLocation": {
+          "file": "test.c",
+          "function": "main",
+          "line": "81",
+          "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+        },
+        "status": "FAILURE",
+        "trace": [
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "<built-in-additions>",
+              "line": "24",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "function": {
+              "displayName": "__CPROVER_initialize",
+              "identifier": "__CPROVER_initialize",
+              "sourceLocation": {
+                "file": "<built-in-additions>",
+                "line": "24",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": true,
+            "internal": false,
+            "sourceLocation": {
+              "file": "<built-in-additions>",
+              "line": "24",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-call",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "__CPROVER_dead_object",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "<built-in-additions>",
+              "line": "8",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "data": "NULL",
+              "name": "pointer",
+              "type": "const void *"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "__CPROVER_deallocated",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "<built-in-additions>",
+              "line": "7",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "data": "NULL",
+              "name": "pointer",
+              "type": "const void *"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "__CPROVER_max_malloc_size",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "<built-in-additions>",
+              "line": "12",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000010000000000000000000000000000000000000000000000000000000",
+              "data": "36028797018963968ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "__CPROVER_memory_leak",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "<built-in-additions>",
+              "line": "9",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "data": "NULL",
+              "name": "pointer",
+              "type": "const void *"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "__CPROVER_rounding_mode",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "<built-in-additions>",
+              "line": "16",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000000",
+              "data": "0",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "House_name",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "39",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "elements": [
+                {
+                  "index": 0,
+                  "value": {
+                    "name": "unknown"
+                  }
+                },
+                {
+                  "index": 1,
+                  "value": {
+                    "name": "unknown"
+                  }
+                }
+              ],
+              "name": "array"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "39",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "39",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "House_name_used",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "40",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "elements": [
+                {
+                  "index": 0,
+                  "value": {
+                    "binary": "00000000",
+                    "data": "FALSE",
+                    "name": "integer",
+                    "type": "_Bool",
+                    "width": 8
+                  }
+                },
+                {
+                  "index": 1,
+                  "value": {
+                    "binary": "00000000",
+                    "data": "FALSE",
+                    "name": "integer",
+                    "type": "_Bool",
+                    "width": 8
+                  }
+                }
+              ],
+              "name": "array"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "40",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000",
+              "data": "FALSE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "40",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000",
+              "data": "FALSE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "House_number",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "37",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "elements": [
+                {
+                  "index": 0,
+                  "value": {
+                    "binary": "00000000000000000000000000000001",
+                    "data": "1",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                },
+                {
+                  "index": 1,
+                  "value": {
+                    "binary": "00000000000000000000000000000010",
+                    "data": "2",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                }
+              ],
+              "name": "array"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "37",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000001",
+              "data": "1",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "37",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000010",
+              "data": "2",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "House_number_used",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "38",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "elements": [
+                {
+                  "index": 0,
+                  "value": {
+                    "binary": "00000000",
+                    "data": "FALSE",
+                    "name": "integer",
+                    "type": "_Bool",
+                    "width": 8
+                  }
+                },
+                {
+                  "index": 1,
+                  "value": {
+                    "binary": "00000000",
+                    "data": "FALSE",
+                    "name": "integer",
+                    "type": "_Bool",
+                    "width": 8
+                  }
+                }
+              ],
+              "name": "array"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "38",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000",
+              "data": "FALSE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "38",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000",
+              "data": "FALSE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "House_pet",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "41",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "elements": [
+                {
+                  "index": 0,
+                  "value": {
+                    "name": "unknown"
+                  }
+                },
+                {
+                  "index": 1,
+                  "value": {
+                    "name": "unknown"
+                  }
+                }
+              ],
+              "name": "array"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "41",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "41",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "House_pet_used",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "42",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "elements": [
+                {
+                  "index": 0,
+                  "value": {
+                    "binary": "00000000",
+                    "data": "FALSE",
+                    "name": "integer",
+                    "type": "_Bool",
+                    "width": 8
+                  }
+                },
+                {
+                  "index": 1,
+                  "value": {
+                    "binary": "00000000",
+                    "data": "FALSE",
+                    "name": "integer",
+                    "type": "_Bool",
+                    "width": 8
+                  }
+                }
+              ],
+              "name": "array"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "42",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000",
+              "data": "FALSE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "42",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000",
+              "data": "FALSE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "function": {
+              "displayName": "__CPROVER_initialize",
+              "identifier": "__CPROVER_initialize",
+              "sourceLocation": {
+                "file": "<built-in-additions>",
+                "line": "24",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": true,
+            "internal": false,
+            "stepType": "function-return",
+            "thread": 0
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "75",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "function": {
+              "displayName": "main",
+              "identifier": "main",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "75",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "line": "75",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-call",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "76",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "members": [
+                {
+                  "name": "houses",
+                  "value": {
+                    "elements": [
+                      {
+                        "index": 0,
+                        "value": {
+                          "members": [
+                            {
+                              "name": "number",
+                              "value": {
+                                "binary": "00000000000000000000000000000000",
+                                "data": "0",
+                                "name": "integer",
+                                "type": "signed int",
+                                "width": 32
+                              }
+                            },
+                            {
+                              "name": "$pad1",
+                              "value": {
+                                "binary": "00000000000000000000000000000000",
+                                "data": "0",
+                                "name": "integer",
+                                "type": "unsigned int",
+                                "width": 32
+                              }
+                            },
+                            {
+                              "name": "name",
+                              "value": {
+                                "data": "((const char *)NULL)",
+                                "name": "pointer",
+                                "type": "const char *"
+                              }
+                            },
+                            {
+                              "name": "pet",
+                              "value": {
+                                "data": "((const char *)NULL)",
+                                "name": "pointer",
+                                "type": "const char *"
+                              }
+                            }
+                          ],
+                          "name": "struct"
+                        }
+                      },
+                      {
+                        "index": 1,
+                        "value": {
+                          "members": [
+                            {
+                              "name": "number",
+                              "value": {
+                                "binary": "00000000000000000000000000000000",
+                                "data": "0",
+                                "name": "integer",
+                                "type": "signed int",
+                                "width": 32
+                              }
+                            },
+                            {
+                              "name": "$pad1",
+                              "value": {
+                                "binary": "00000000000000000000000000000000",
+                                "data": "0",
+                                "name": "integer",
+                                "type": "unsigned int",
+                                "width": 32
+                              }
+                            },
+                            {
+                              "name": "name",
+                              "value": {
+                                "data": "((const char *)NULL)",
+                                "name": "pointer",
+                                "type": "const char *"
+                              }
+                            },
+                            {
+                              "name": "pet",
+                              "value": {
+                                "data": "((const char *)NULL)",
+                                "name": "pointer",
+                                "type": "const char *"
+                              }
+                            }
+                          ],
+                          "name": "struct"
+                        }
+                      }
+                    ],
+                    "name": "array"
+                  }
+                }
+              ],
+              "name": "struct"
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "77",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "function": {
+              "displayName": "init_Solution",
+              "identifier": "init_Solution",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "54",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "77",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-call",
+            "thread": 0
+          },
+          {
+            "assignmentType": "actual-parameter",
+            "hidden": false,
+            "internal": false,
+            "lhs": "instance",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "77",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "data": "solution!0@1",
+              "name": "pointer",
+              "type": "struct Solution *"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "i",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "55",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "i",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "55",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "55",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "loop-head",
+            "thread": 0
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "56",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "function": {
+              "displayName": "init_House",
+              "identifier": "init_House",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "44",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "56",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-call",
+            "thread": 0
+          },
+          {
+            "assignmentType": "actual-parameter",
+            "hidden": false,
+            "internal": false,
+            "lhs": "instance",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "56",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000001",
+              "data": "1ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000",
+              "data": "FALSE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[0l].number",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000010",
+              "data": "2",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000001",
+              "data": "1ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000",
+              "data": "FALSE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[0l].name",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000",
+              "data": "FALSE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[0l].pet",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "function": {
+              "displayName": "init_House",
+              "identifier": "init_House",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "44",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "48",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-return",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "i",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "55",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000001",
+              "data": "1ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "55",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "loop-head",
+            "thread": 0
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "56",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "function": {
+              "displayName": "init_House",
+              "identifier": "init_House",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "44",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "56",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-call",
+            "thread": 0
+          },
+          {
+            "assignmentType": "actual-parameter",
+            "hidden": false,
+            "internal": false,
+            "lhs": "instance",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "56",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_number_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[1l].number",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "45",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000001",
+              "data": "1",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_name_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[1l].name",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "46",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000001",
+              "data": "1ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet_used[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "House_pet_used[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000001",
+              "data": "TRUE",
+              "name": "integer",
+              "type": "_Bool",
+              "width": 8
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[1l].pet",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "47",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "function": {
+              "displayName": "init_House",
+              "identifier": "init_House",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "44",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_House",
+              "line": "48",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-return",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "i",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "55",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000010",
+              "data": "2ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "55",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "loop-head",
+            "thread": 0
+          },
+          {
+            "function": {
+              "displayName": "init_Solution",
+              "identifier": "init_Solution",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "54",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "init_Solution",
+              "line": "58",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-return",
+            "thread": 0
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "function": {
+              "displayName": "validate",
+              "identifier": "validate",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "60",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-call",
+            "thread": 0
+          },
+          {
+            "assignmentType": "actual-parameter",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "elements": [
+                {
+                  "index": 0,
+                  "value": {
+                    "members": [
+                      {
+                        "name": "number",
+                        "value": {
+                          "binary": "00000000000000000000000000000010",
+                          "data": "2",
+                          "name": "integer",
+                          "type": "signed int",
+                          "width": 32
+                        }
+                      },
+                      {
+                        "name": "$pad1",
+                        "value": {
+                          "binary": "00000000000000000000000000000000",
+                          "data": "0",
+                          "name": "integer",
+                          "type": "unsigned int",
+                          "width": 32
+                        }
+                      },
+                      {
+                        "name": "name",
+                        "value": {
+                          "name": "unknown"
+                        }
+                      },
+                      {
+                        "name": "pet",
+                        "value": {
+                          "name": "unknown"
+                        }
+                      }
+                    ],
+                    "name": "struct"
+                  }
+                },
+                {
+                  "index": 1,
+                  "value": {
+                    "members": [
+                      {
+                        "name": "number",
+                        "value": {
+                          "binary": "00000000000000000000000000000001",
+                          "data": "1",
+                          "name": "integer",
+                          "type": "signed int",
+                          "width": 32
+                        }
+                      },
+                      {
+                        "name": "$pad1",
+                        "value": {
+                          "binary": "00000000000000000000000000000000",
+                          "data": "0",
+                          "name": "integer",
+                          "type": "unsigned int",
+                          "width": 32
+                        }
+                      },
+                      {
+                        "name": "name",
+                        "value": {
+                          "name": "unknown"
+                        }
+                      },
+                      {
+                        "name": "pet",
+                        "value": {
+                          "name": "unknown"
+                        }
+                      }
+                    ],
+                    "name": "struct"
+                  }
+                }
+              ],
+              "name": "array"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[0l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "members": [
+                {
+                  "name": "number",
+                  "value": {
+                    "binary": "00000000000000000000000000000010",
+                    "data": "2",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "$pad1",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "unsigned int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "name",
+                  "value": {
+                    "name": "unknown"
+                  }
+                },
+                {
+                  "name": "pet",
+                  "value": {
+                    "name": "unknown"
+                  }
+                }
+              ],
+              "name": "struct"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[0l].number",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000010",
+              "data": "2",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[0l].$pad1",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000000",
+              "data": "0",
+              "name": "integer",
+              "type": "unsigned int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[0l].name",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[0l].pet",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[1l]",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "members": [
+                {
+                  "name": "number",
+                  "value": {
+                    "binary": "00000000000000000000000000000001",
+                    "data": "1",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "$pad1",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "unsigned int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "name",
+                  "value": {
+                    "name": "unknown"
+                  }
+                },
+                {
+                  "name": "pet",
+                  "value": {
+                    "name": "unknown"
+                  }
+                }
+              ],
+              "name": "struct"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[1l].number",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000001",
+              "data": "1",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[1l].$pad1",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000000",
+              "data": "0",
+              "name": "integer",
+              "type": "unsigned int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[1l].name",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "solution.houses[1l].pet",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "78",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "eric_house",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "members": [
+                {
+                  "name": "number",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "$pad1",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "unsigned int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "name",
+                  "value": {
+                    "data": "((const char *)NULL)",
+                    "name": "pointer",
+                    "type": "const char *"
+                  }
+                },
+                {
+                  "name": "pet",
+                  "value": {
+                    "data": "((const char *)NULL)",
+                    "name": "pointer",
+                    "type": "const char *"
+                  }
+                }
+              ],
+              "name": "struct"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "return_value___CPROVER_nondet_array_index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "function": {
+              "displayName": "__CPROVER_nondet_array_index",
+              "identifier": "__CPROVER_nondet_array_index",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "12",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-call",
+            "thread": 0
+          },
+          {
+            "assignmentType": "actual-parameter",
+            "hidden": false,
+            "internal": false,
+            "lhs": "length",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000010",
+              "data": "2ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "13",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000001",
+              "data": "1ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "14",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "goto_symex$$return_value$$__CPROVER_nondet_array_index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "15",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000001",
+              "data": "1ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "function": {
+              "displayName": "__CPROVER_nondet_array_index",
+              "identifier": "__CPROVER_nondet_array_index",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "12",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "16",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-return",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "return_value___CPROVER_nondet_array_index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000001",
+              "data": "1ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "eric_house",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "members": [
+                {
+                  "name": "number",
+                  "value": {
+                    "binary": "00000000000000000000000000000001",
+                    "data": "1",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "$pad1",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "unsigned int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "name",
+                  "value": {
+                    "name": "unknown"
+                  }
+                },
+                {
+                  "name": "pet",
+                  "value": {
+                    "name": "unknown"
+                  }
+                }
+              ],
+              "name": "struct"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "eric_house.number",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000001",
+              "data": "1",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "eric_house.$pad1",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000000",
+              "data": "0",
+              "name": "integer",
+              "type": "unsigned int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "eric_house.name",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "eric_house.pet",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "61",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "62",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "arnold_house",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "members": [
+                {
+                  "name": "number",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "$pad1",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "unsigned int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "name",
+                  "value": {
+                    "data": "((const char *)NULL)",
+                    "name": "pointer",
+                    "type": "const char *"
+                  }
+                },
+                {
+                  "name": "pet",
+                  "value": {
+                    "data": "((const char *)NULL)",
+                    "name": "pointer",
+                    "type": "const char *"
+                  }
+                }
+              ],
+              "name": "struct"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "return_value___CPROVER_nondet_array_index$0",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "function": {
+              "displayName": "__CPROVER_nondet_array_index",
+              "identifier": "__CPROVER_nondet_array_index",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "12",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-call",
+            "thread": 0
+          },
+          {
+            "assignmentType": "actual-parameter",
+            "hidden": false,
+            "internal": false,
+            "lhs": "length",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000010",
+              "data": "2ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "13",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "14",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "goto_symex$$return_value$$__CPROVER_nondet_array_index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "15",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "function": {
+              "displayName": "__CPROVER_nondet_array_index",
+              "identifier": "__CPROVER_nondet_array_index",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "12",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "16",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-return",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "return_value___CPROVER_nondet_array_index$0",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "arnold_house",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "members": [
+                {
+                  "name": "number",
+                  "value": {
+                    "binary": "00000000000000000000000000000010",
+                    "data": "2",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "$pad1",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "unsigned int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "name",
+                  "value": {
+                    "name": "unknown"
+                  }
+                },
+                {
+                  "name": "pet",
+                  "value": {
+                    "name": "unknown"
+                  }
+                }
+              ],
+              "name": "struct"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "arnold_house.number",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000010",
+              "data": "2",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "arnold_house.$pad1",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000000",
+              "data": "0",
+              "name": "integer",
+              "type": "unsigned int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "arnold_house.name",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "arnold_house.pet",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "63",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "64",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "65",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "dog_house",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "members": [
+                {
+                  "name": "number",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "$pad1",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "unsigned int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "name",
+                  "value": {
+                    "data": "((const char *)NULL)",
+                    "name": "pointer",
+                    "type": "const char *"
+                  }
+                },
+                {
+                  "name": "pet",
+                  "value": {
+                    "data": "((const char *)NULL)",
+                    "name": "pointer",
+                    "type": "const char *"
+                  }
+                }
+              ],
+              "name": "struct"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": true,
+            "internal": false,
+            "lhs": "return_value___CPROVER_nondet_array_index$1",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "function": {
+              "displayName": "__CPROVER_nondet_array_index",
+              "identifier": "__CPROVER_nondet_array_index",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "12",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-call",
+            "thread": 0
+          },
+          {
+            "assignmentType": "actual-parameter",
+            "hidden": false,
+            "internal": false,
+            "lhs": "length",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000010",
+              "data": "2ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "13",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "14",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "goto_symex$$return_value$$__CPROVER_nondet_array_index",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "15",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "function": {
+              "displayName": "__CPROVER_nondet_array_index",
+              "identifier": "__CPROVER_nondet_array_index",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "12",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "__CPROVER_nondet_array_index",
+              "line": "16",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-return",
+            "thread": 0
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "return_value___CPROVER_nondet_array_index$1",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "0000000000000000000000000000000000000000000000000000000000000000",
+              "data": "0ul",
+              "name": "integer",
+              "type": "__CPROVER_size_t",
+              "width": 64
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "dog_house",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "members": [
+                {
+                  "name": "number",
+                  "value": {
+                    "binary": "00000000000000000000000000000010",
+                    "data": "2",
+                    "name": "integer",
+                    "type": "signed int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "$pad1",
+                  "value": {
+                    "binary": "00000000000000000000000000000000",
+                    "data": "0",
+                    "name": "integer",
+                    "type": "unsigned int",
+                    "width": 32
+                  }
+                },
+                {
+                  "name": "name",
+                  "value": {
+                    "name": "unknown"
+                  }
+                },
+                {
+                  "name": "pet",
+                  "value": {
+                    "name": "unknown"
+                  }
+                }
+              ],
+              "name": "struct"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "dog_house.number",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000010",
+              "data": "2",
+              "name": "integer",
+              "type": "signed int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "dog_house.$pad1",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "binary": "00000000000000000000000000000000",
+              "data": "0",
+              "name": "integer",
+              "type": "unsigned int",
+              "width": 32
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "dog_house.name",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "assignmentType": "variable",
+            "hidden": false,
+            "internal": false,
+            "lhs": "dog_house.pet",
+            "mode": "C",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "66",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "assignment",
+            "thread": 0,
+            "value": {
+              "name": "unknown"
+            }
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "67",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "hidden": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "68",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "location-only",
+            "thread": 0
+          },
+          {
+            "function": {
+              "displayName": "validate",
+              "identifier": "validate",
+              "sourceLocation": {
+                "file": "test.c",
+                "line": "60",
+                "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+              }
+            },
+            "hidden": false,
+            "internal": false,
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "validate",
+              "line": "69",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "function-return",
+            "thread": 0
+          },
+          {
+            "hidden": false,
+            "internal": true,
+            "mode": "C",
+            "outputID": "solution",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "80",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "output",
+            "thread": 0,
+            "values": [
+              {
+                "members": [
+                  {
+                    "name": "houses",
+                    "value": {
+                      "elements": [
+                        {
+                          "index": 0,
+                          "value": {
+                            "members": [
+                              {
+                                "name": "number",
+                                "value": {
+                                  "binary": "00000000000000000000000000000010",
+                                  "data": "2",
+                                  "name": "integer",
+                                  "type": "signed int",
+                                  "width": 32
+                                }
+                              },
+                              {
+                                "name": "$pad1",
+                                "value": {
+                                  "binary": "00000000000000000000000000000000",
+                                  "data": "0",
+                                  "name": "integer",
+                                  "type": "unsigned int",
+                                  "width": 32
+                                }
+                              },
+                              {
+                                "name": "name",
+                                "value": {
+                                  "name": "unknown"
+                                }
+                              },
+                              {
+                                "name": "pet",
+                                "value": {
+                                  "name": "unknown"
+                                }
+                              }
+                            ],
+                            "name": "struct"
+                          }
+                        },
+                        {
+                          "index": 1,
+                          "value": {
+                            "members": [
+                              {
+                                "name": "number",
+                                "value": {
+                                  "binary": "00000000000000000000000000000001",
+                                  "data": "1",
+                                  "name": "integer",
+                                  "type": "signed int",
+                                  "width": 32
+                                }
+                              },
+                              {
+                                "name": "$pad1",
+                                "value": {
+                                  "binary": "00000000000000000000000000000000",
+                                  "data": "0",
+                                  "name": "integer",
+                                  "type": "unsigned int",
+                                  "width": 32
+                                }
+                              },
+                              {
+                                "name": "name",
+                                "value": {
+                                  "name": "unknown"
+                                }
+                              },
+                              {
+                                "name": "pet",
+                                "value": {
+                                  "name": "unknown"
+                                }
+                              }
+                            ],
+                            "name": "struct"
+                          }
+                        }
+                      ],
+                      "name": "array"
+                    }
+                  }
+                ],
+                "name": "struct"
+              }
+            ]
+          },
+          {
+            "hidden": false,
+            "internal": false,
+            "property": "main.assertion.1",
+            "reason": "assertion",
+            "sourceLocation": {
+              "file": "test.c",
+              "function": "main",
+              "line": "81",
+              "workingDirectory": "/Users/yasminemoussaoui/Desktop/cbmc"
+            },
+            "stepType": "failure",
+            "thread": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "messageText": "VERIFICATION FAILED",
+    "messageType": "STATUS-MESSAGE"
+  },
+  {
+    "cProverStatus": "failure"
+  }
+]

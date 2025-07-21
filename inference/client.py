@@ -14,7 +14,7 @@ from inference.finish_reason import FinishReason
 
 
 # Number of times we ask the model to continue or retry a request If the model hits a token limit or we get a failure HTTP status code.
-RETRY_LIMIT: int = 5
+RETRY_LIMIT: int = 0
 
 # Message we send if we hit a token limit.
 CONTINUATION_MESSAGE: str = (
@@ -36,7 +36,13 @@ class InferenceClient:
         self.conversation: list[Message] = []
         self.__logger: Logger = logger_factory(__name__)
         self.__chat_completion = chat_completion
-
+    
+    async def create(self, prompt: Message) -> Optional[str]:
+        finish_reason, ai_response = await self.__chat_completion.create(
+                [prompt]
+            )
+        return finish_reason, ai_response
+    
     async def send(self) -> Optional[str]:
         """
         Sends the current full conversation history to the chat completions API.
@@ -91,3 +97,9 @@ class InferenceClient:
         Adds the given message to the conversation history.
         """
         self.conversation.append(Message(role, text))
+
+    def set_temperature(self, temperature: float) -> None:
+        self.__chat_completion.set_temperature(temperature)
+
+    def reset_temperature(self) -> None:
+        self.__chat_completion.reset_temperature()

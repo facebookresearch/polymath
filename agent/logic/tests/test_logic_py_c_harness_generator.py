@@ -511,4 +511,5 @@ int main(void) {
     def __test_harness(self, code: str, expected_harness: str) -> None:
         source_tree: Module = parse_module(code)
         harness: str = LogicPyCHarnessGenerator.generate(source_tree)
+        
         self.assertEqual(expected_harness, harness)

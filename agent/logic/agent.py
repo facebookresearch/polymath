@@ -9,6 +9,7 @@ from logging import Logger
 from re import compile, DOTALL, Match, Pattern
 from tempfile import gettempdir
 from typing import Callable, Optional, Tuple
+import time
 
 from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
 from agent.logic.solver import Solver
@@ -43,6 +44,79 @@ RETRY_COUNT: int = 5
 # Constraints taking longer to solve than this are likely incorrect
 _SOLVER_TIMEOUT: float = 15
 
+ERROR_MESSAGE = r"""
+You are an expert in formal verification and static analysis of Python programs extended with domain-specific languages.
+
+I will provide you with two things:
+1. A Python code snippet that includes domain-specific annotations.
+2. An error output from a formal verification tool.
+
+Your task is to:
+- Carefully analyze the code.
+- Understand the error messages.
+- Provide a clear and concise explanation of each error, including:
+  - What the error means.
+  - What part of the code is responsible.
+  - How to fix the code to resolve the error.
+
+** do not try to solve the problem your self.
+
+Be precise and structured in your explanation.
+
+### Code:
+```python
+{}
+```
+### Error:
+```
+{}
+```
+
+Please explain clearly:
+
+Why the verifier reports these errors and What changes are needed in the code to fix them.
+
+i am gonna walk you through an exemple:
+Code :
+
+class house:
+    name: Unique[Domain[str, "peter", "eric", "arnold"]]
+    hobby: Unique[Domain[str, "photography", "cooking", "gardening"]]
+
+class solution:
+    houses: list[house, 3]
+
+def validate(solution: solution) -> None:
+    # 1. Eric is somewhere to the left of the person who enjoys gardening.
+    eric = nondet(solution.houses)
+    assume(eric.name == "eric")
+    gardener = nondet(solution.houses)
+    assume(gardener.hobby == "gardening")
+    assert solution.houses.index(eric) < solution.houses.index(gardener)
+
+    # 2. Arnold is not in the third house.
+    arnold = nondet(solution.houses)
+    assume(arnold.name == "arnold")
+    assert solution.houses.index(arnold)!= 2
+
+    # 3. Arnold is not in the second house.
+    assert arnold not in solution.houses[1:2]
+
+
+Erreur:
+```
+"syntax error before 'not'",
+```
+
+Explanation:
+- The parser encountered an unexpected keyword `not` at a position where it expected a different syntax structure.
+- The error occurs in the line `assert arnold not in solution.houses[1:2]`.
+- This might be due to parser limitations or the static analyzer not supporting `not in` directly on slices in assertions involving nondeterministic objects.
+-  Use an explicit inequality or alternative expression:
+  assert solution.houses.index(arnold) != 1
+
+
+"""
 
 class LogicAgent(Solver):
     """
@@ -59,7 +133,8 @@ class LogicAgent(Solver):
         engine_strategy: EngineStrategy,
         result_trace: ResultTrace,
         collect_pyre_type_information: bool = False,
-    ) -> None:
+        expected_solution: str = None
+        ) -> None:
         """
         Initialises inference client with default settings and the provided
         model name.
@@ -80,10 +155,11 @@ class LogicAgent(Solver):
         self.__client = InferenceClient(logger_factory, chat_completion)
         self.__result_trace: ResultTrace = result_trace
         self.__collect_pyre_type_information: bool = collect_pyre_type_information
+        self.__expected_solution = expected_solution
 
     async def solve(self) -> None:
         """
-        Solves the task in the configured engine strategy. This is actually just
+        Solves thetask in the configured engine strategy. This is actually just
         a retry wrapper around `__solve`, where retries are mostly triggered by
         Python or solver syntax errors. In these cases, we trigger a trajectory
         from scratch, to avoid repeating the same sequences.
@@ -109,7 +185,7 @@ Constraints:
             if not attempt_failed:
                 break
 
-            self.__client.conversation.clear()
+            #self.__client.conversation.clear()
             attempt += 1
             if attempt >= RETRY_COUNT:
                 break
@@ -151,9 +227,12 @@ Constraints:
         self.__client.add_message(
             self.__engine_strategy.data_structure_prompt, Role.USER
         )
+        start = time.perf_counter()
         data_structure: Optional[str] = await self.__receive_code_response(
             "data structure"
         )
+        end = time.perf_counter()
+        self.__result_trace.data_structure_time = end - start
         if data_structure:
             self.__result_trace.python_data_structure = data_structure
             return data_structure
@@ -180,9 +259,12 @@ Constraints:
             all_constraints: list[str] = []
             for constraints_prompt in self.__engine_strategy.constraints_prompt:
                 self.__client.add_message(constraints_prompt, Role.USER)
+                start = time.perf_counter()
                 constraints: Optional[str] = await self.__receive_code_response(
                     "validation function"
                 )
+                end = time.perf_counter()
+                self.__result_trace.constraints_time = end - start
                 if constraints is None:
                     self.__logger.error("Failed to define solution constraints.")
                     self.__result_trace.python_code = data_structure
@@ -193,7 +275,10 @@ Constraints:
 {self.__engine_strategy.python_code_prefix}
 {data_structure}
 {os.linesep.join(all_constraints)}
-"""
+                              """
+            print("PyTHON CODE")
+            print(python_code)
+            print("\n\n")
             self.__result_trace.python_code = python_code
 
             module: Module
@@ -205,18 +290,25 @@ Constraints:
                     )
                     module = metadata.module
                 else:
+                    start = time.perf_counter()
                     module = parse_module(python_code)
                     metadata = None
+                    end = time.perf_counter()
+                    self.__result_trace.libcst_time = end - start
             except ParserSyntaxError:
                 self.__logger.exception("Parser error when reading constraint")
                 self.__result_trace.num_logic_py_syntax_errors += 1
                 return None, True
-
             solver_constraints: str = (
                 await self.__engine_strategy.generate_solver_constraints(
                     module, metadata
                 )
             )
+
+            print("\n\n")
+            print("CONSTRAINT To CBMC : ")
+            print(solver_constraints)
+            print("\n\n")
             self.__result_trace.solver_constraints = solver_constraints
 
             solver_input_file_suffix: str = (
@@ -226,35 +318,43 @@ Constraints:
             stdout: str
             stderr: str
             async with NamedTemporaryFile(
-                mode="w", suffix=solver_input_file_suffix, delete_on_close=False
+                mode="w", suffix=solver_input_file_suffix , delete_on_close=False
             ) as file:
                 await file.write(solver_constraints)
                 await file.close()
-
                 solver_input_file: str = str(file.name)
+                print(f"File : {solver_input_file}")
                 try:
+                    start = time.perf_counter()
                     solver_exit_code, stdout, stderr = await Subprocess.run(
                         *self.__engine_strategy.generate_solver_invocation_command(
                             solver_input_file
                         ),
                         timeout_in_s=_SOLVER_TIMEOUT,
                     )
+                    end = time.perf_counter()
+                    self.__result_trace.solver_time = end - start
                 except TimeoutError:
                     self.__logger.exception(
                         f"""Solver timeout.
 Python Code:
 {self.__result_trace.python_code}
-
 Constraints:
 {self.__result_trace.solver_constraints}
-"""
+                        """
                     )
                     self.__result_trace.num_solver_timeouts += 1
+                    return None, True
+                except Exception as e :
+                    print("EREEUR Lors de l'execution de cbmc ",e)
+                    #finish_reason, ai_response = await self.__chat_completion.create(ERROR_MESSAGE.format(python_code,e))
+                    #self.__client.add_message(ai_response)
                     return None, True
 
             self.__result_trace.solver_output = f"{stdout}{stderr}"
             self.__result_trace.solver_exit_code = solver_exit_code
 
+            #print(f"SOLVER EXIT CODE {solver_exit_code}")
             solver_outcome, output = self.__engine_strategy.parse_solver_output(
                 solver_exit_code, stdout, stderr
             )
@@ -262,7 +362,12 @@ Constraints:
                 case SolverOutcome.SUCCESS:
                     return output, False
                 case SolverOutcome.FATAL:
-                    self.__result_trace.num_solver_errors += 1
+                    print("Cbmc Erreur")
+                    print(stderr)
+                    print("\n\n")
+                    #finish_reason, ai_response = await self.__chat_completion.create(ERROR_MESSAGE.format(python_code,stderr))
+                    #self.__client.add_message(ai_response)
+                    #self.__result_trace.num_solver_errors += 1
                     return None, True
                 case SolverOutcome.RETRY:
                     attempts += 1
@@ -297,9 +402,12 @@ Constraints:
         formatted_solution: Optional[str]
         if format_prompt:
             self.__client.add_message(format_prompt, Role.USER)
+            start = time.perf_counter()
             formatted_solution = await self.__receive_code_response(
                 "formatted solution"
             )
+            end = time.perf_counter()
+            self.__result_trace.format_time = end - start
         else:
             formatted_solution = solution
 

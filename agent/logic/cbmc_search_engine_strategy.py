@@ -8,6 +8,7 @@ from io import StringIO
 from json import loads
 from logging import Logger
 from typing import Any, Callable, Optional, Tuple
+import re
 
 from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
 from agent.logic.logic_py_c_harness_generator import LogicPyCHarnessGenerator
@@ -25,7 +26,7 @@ _CONSTRAINTS_MESSAGE: str = """Now you must generate a validation function which
 Puzzle condition: "Bob is the person who owns a dog"
 Constraint:
 ```
-bob = nondet(solution.people)
+bob = nondet(solution.Houses)
 assume(bob.name == "Bob")
 assert bob.pet == "dog"
 ```
@@ -33,11 +34,19 @@ assert bob.pet == "dog"
 Puzzle condition: "The coffee drinker is taller than the tea drinker"
 Constraint:
 ```
-coffee_drinker = nondet(solution.people)
+coffee_drinker = nondet(solution.Houses)
 assume(coffee_drinker.drink == "coffee")
-tea_drinker = nondet(solution.people)
+tea_drinker = nondet(solution.Houses)
 assume(tea_drinker.drink == "tea")
 assert coffe_drinker.height > tea_drinker.height
+```
+** Always when working with indices you must work with the function `index` just like this exemple:
+Puzzle condition: "The person who loves fantasy books is in the second house"
+Constraint:
+```
+fantasy_lover = nondet(solution.Houses)
+assume(fantasy_lover.BookGenre == "fantasy")
+assert solution.Houses.index(fantasy_lover) == 1
 ```
 
 The validation function signature must look as follows:
@@ -47,7 +56,7 @@ def validate(solution: Solution) -> None
     # Your constraints belong here...
 ```
 
-Now generate the conditions necessary to check that a solution to the puzzle is correct! Make sure that you consider every condition stated in the puzzle!"
+Now generate the conditions necessary to check that a solution to the puzzle is correct! Make sure that you consider every constraint stated in the puzzle even if you think that we have already did it, they are numbered so make attention not to miss one so always write a comment that containts the number and the content of the constraint!"
 """
 
 # Kicks off the data structure generation by the model.
@@ -66,7 +75,9 @@ _FORMAT_MESSAGE: str = """Your logic solver tool produced the following solution
 Now convert it to the expected output format:
 ```
 {output_format}
-```"""
+```
+just give me the same output format without any changes and not a python code and the result needs to be in between ``` ``` 
+"""
 
 # Instructs the model on how to generate a solution data structure.
 _SYSTEM_PROMPT: str = """You are an expert puzzle solving agent with access to a propositional logic solver tool that has a convenient interface optimised for you. Your boss has given you a logic puzzle that he thinks can be mapped to your logic solver tool. You must solve this puzzle in two steps:
@@ -79,20 +90,21 @@ I will walk you through these steps one by one. Do not attempt to solve the puzz
 
 Your solver tool allows you to specify the output solution type as Python classes, with a few additional features:
 
-* Just like in SQL, each field can be marked as unique, meaning no two instances of the class can have the same value, e.g.: `id: Unique[int]`
-* Each field can have a value constraint assigned to it, such that only these values are allowed, e.g.: `id: Domain[int, range(1, 11)]` allows id values between 1 (inclusive) and 11 (exclusive), or `name: Domain[str, \"John\", \"Jane\", \"Peter\"]` allows only the strings \"John\", \"Jane\", or \"Peter\". 
+* Just like in SQL, each field can be marked as unique, meaning no two instances of the class can have the same value, e.g.: `Id: Unique[int]`
+* Each field can have a value constraint assigned to it, such that only these values are allowed, e.g.: `Id: Domain[int, range(1, 11)]` allows id values between 1 (inclusive) and 11 (exclusive), or `Name: Domain[str, \"John\", \"Jane\", \"Peter\"]` allows only the strings \"John\", \"Jane\", or \"Peter\".
 * The `list` type allows for a second type argument specifying the size, e.g.: `list[int, 10]`.
 
 Here is an example that uses these features in combination:
 ```
-class Row:
-    id: Unique[Domain[int, range(1, 11)]]
+class House:
     name: Unique[Domain[str, \"John\", \"Jane\", \"Peter\"]]
     music: Unique[Domain[str, \"Jazz\", \"Rock\", \"Pop\"]]
 
-class Table:
-    rows: list[Row, 10]
+class Solution:
+    houses: list[House, 3]
 ```
+You need to always pursue this example, do just two classes one that contains all the attributs ( in this case it is House ) where all the atributs need to be in lowercase and another one that determines the number of data structures that we need ( in this case it is Solution ).
+Do not add an attribute 'HouseNumber' to track the indices, you will be provided in the next prompt an how to manage them.
 
 Always constrain data types according to all the information you can identify in the puzzle text. This is critical for solving the puzzle.
 
@@ -101,7 +113,8 @@ In order to automatically validate the puzzle solution, your data structure will
 {}
 ```
 
-Now specify the type of a valid solution using this syntax."""
+Now specify the type of a valid solution using this syntax and make sur to always put the code in ``` ```
+"""
 
 # Sent if the solver was unable to find a solution.
 _UNSAT_MESSAGE: str = (
@@ -145,11 +158,10 @@ class CBMCSearchEngineStrategy(EngineStrategy):
             "cbmc",
             "-D__CPROVER",
             "--no-standard-checks",
-            "--json-ui",
+            #"--json-ui",
             "--trace",
             solver_input_file,
         ]
-
     def get_format_prompt(self, solution: str) -> Optional[str]:
         return _FORMAT_MESSAGE.format(
             solution=solution, output_format=self.__output_format
@@ -159,13 +171,14 @@ class CBMCSearchEngineStrategy(EngineStrategy):
         self, exit_code: int, stdout: str, stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         if exit_code == 10:
-            cbmc_json_output: Any = loads(stdout)
+            cbmc_txt_output = stdout
             parsed_output: str = CBMCSearchEngineStrategy.__parse_cbmc_solution(
-                cbmc_json_output
+                cbmc_txt_output
             )
             return SolverOutcome.SUCCESS, parsed_output
 
         if exit_code != 0:
+            print(f"Cbmc {exit_code=} Erreur Fatal in {__file__}")
             return SolverOutcome.FATAL, None
 
         self.__logger.error(
@@ -253,17 +266,67 @@ class CBMCSearchEngineStrategy(EngineStrategy):
             Python-ish expression equivalent to solution output struct in CBMC
             trace.
         """
-        output_step: Any = [
-            step
-            for message in cbmc_output
-            if "result" in message
-            for result in message["result"]
-            if result["status"] == "FAILURE"
-            for step in result["trace"]
-            if step["stepType"] == "output"
-        ][0]
-        value: Any = output_step["values"][0]
-
+        #output_step: Any = [
+        #    step
+        #    for message in cbmc_output
+        #    if "result" in message
+        #    for result in message["result"]
+        #    if result["status"] == "FAILURE"
+        #    for step in result["trace"]
+        #    if step["stepType"] == "output"
+        #][0]
+        #value: Any = output_step["values"][0]
+        value = CBMCSearchEngineStrategy.txt_to_json(cbmc_output)
+        #print(f"CBMC VALUE {value} ")
         string_builder = StringIO()
         CBMCSearchEngineStrategy.__cbmc_value_to_string(string_builder, value, "")
         return string_builder.getvalue()
+    
+    @staticmethod
+    def txt_to_json(cbmc_output: str) -> Any:
+        # Étape 1 : identifier le nom de la structure principale (.Houses, .Cars, etc.)
+        main_match = re.search(r'OUTPUT solution:\s*\{\s*\.(\w+)\s*=\s*\{((?:\s*\{[^{}]*\},?)+)\s*\}\s*\}',cbmc_output)
+
+        main_key = main_match.group(1)
+        entries_raw = main_match.group(2)
+
+        # Étape 2 : extraire chaque bloc { .X="...", .Y="...", ... }
+        blocks = re.findall(r'\{(.*?)\}', entries_raw, re.DOTALL)
+
+        # Étape 3 : analyser dynamiquement les attributs de chaque bloc
+        elements = []
+
+        for idx, block in enumerate(blocks):
+            # Trouver tous les attributs sous la forme .Nom="valeur"
+            fields = re.findall(r'\.(\w+)\s*=\s*"([^"]*)"', block)
+            members = [
+            {
+                "name": key,
+                "value": {
+                    "data": val,
+                    "type": "const char *"
+                }
+            }
+            for key, val in fields ]
+            elements.append({
+                "index": idx,
+                "value": {
+                    "name": "struct",
+                    "members": members
+                }
+            })
+
+        # Étape 4 : construire le JSON final
+        json_result = {
+            "name": "struct",
+            "members": [
+            {
+                "name": main_key,
+                "value": {
+                    "name": "array",
+                    "elements": elements
+                    }
+                }
+            ]
+        }
+        return json_result
