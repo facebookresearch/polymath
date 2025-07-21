@@ -1,3 +1,6 @@
+# Fichiers volumineux à ignorer
+agent/logic/Llama-3.3-70B@Instruct-all-cbmc.json
+agent/logic/Llama-3.3-70B@Instruct-all-prolog-v2.json
 __pycache__
 .env
 .vscode
