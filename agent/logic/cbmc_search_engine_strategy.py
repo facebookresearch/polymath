@@ -12,8 +12,7 @@ import re
 
 from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
 from agent.logic.logic_py_c_harness_generator import LogicPyCHarnessGenerator
-from libcst import MetadataWrapper, Module
-
+from libcst import MetadataWrapper, Module, parse_module, ParserSyntaxError
 
 # Instructs the model to generate the solution constraints.
 _CONSTRAINTS_MESSAGE: str = """Now you must generate a validation function which contains constraints that assert that a given solution is correct. Your solver tool will then find a solution which satisfies your constraints and thus solve the puzzle. Please adhere to the following rules:
@@ -76,7 +75,7 @@ Now convert it to the expected output format:
 ```
 {output_format}
 ```
-just give me the same output format without any changes and not a python code and the result needs to be in between ``` ``` 
+just give me the same output format without any changes and not a python code and the result needs to be in between ``` ```
 """
 
 # Instructs the model on how to generate a solution data structure.
@@ -148,10 +147,24 @@ class CBMCSearchEngineStrategy(EngineStrategy):
     def data_structure_prompt(self) -> str:
         return _SYSTEM_PROMPT.format(self.__output_format)
 
+    def data_structure_included(self, constraints: str) -> bool :
+        return re.match(r"\s*class",constraints)
+
     async def generate_solver_constraints(
-        self, module: Module, metadata: Optional[MetadataWrapper]
+            self, python_code: str, collect_pyre_type_information: bool,
     ) -> str:
-        return LogicPyCHarnessGenerator.generate(module)
+        module: Module
+        metadata: Optional[MetadataWrapper]
+        if collect_pyre_type_information:
+            metadata = await ModuleWithTypeInfoFactory.create_module(
+                python_code
+            )
+            module = metadata.module
+        else:
+            module = parse_module(python_code)
+            metadata = None
+
+        return (LogicPyCHarnessGenerator.generate(module),)
 
     def generate_solver_invocation_command(self, solver_input_file: str) -> list[str]:
         return [
@@ -281,7 +294,7 @@ class CBMCSearchEngineStrategy(EngineStrategy):
         string_builder = StringIO()
         CBMCSearchEngineStrategy.__cbmc_value_to_string(string_builder, value, "")
         return string_builder.getvalue()
-    
+
     @staticmethod
     def txt_to_json(cbmc_output: str) -> Any:
         # Étape 1 : identifier le nom de la structure principale (.Houses, .Cars, etc.)

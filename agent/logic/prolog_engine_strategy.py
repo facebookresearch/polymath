@@ -26,7 +26,7 @@ Given the following puzzle description (including all clues), generate the follo
 ** Your solver tool supports only these 4 operators `#=`, `#<`, `#>`, `#\=` and only the function `abs/1`.
 Here is an exmple to follow:
     % Clue 1: The person whose child is Fred is somewhere to the left of Eric.
-    Fred #< Eric,    
+    Fred #< Eric,
     % Clue 2: There are two houses between The person whose mother's name is Penny and the person who is short.
     abs(Penny - Short) #= 3,
     % Clue 3: The person whose favorite color is red is in the second house.
@@ -34,9 +34,9 @@ Here is an exmple to follow:
     % Clue 4: The rabbit owner is directly left of The person whose mother's name is Aniya.
     Rabbit #= Aniya - 1,
 
-- and finally you shoud label and print the results 
+- and finally you shoud label and print the results
 labeling([], Vars),
-write(Vars), nl. ** this line needs to end with a point '.' 
+write(Vars), nl. ** this line needs to end with a point '.'
 
 """
 
@@ -77,16 +77,16 @@ I will walk you through these steps one by one. Do **not** attempt to solve the 
 Given the following puzzle description (including both entity definitions and logical constraints), extract only the structure of the solution space as follows:
 
 ### Your task:
-1. create prdicate solve/0 where we are gonna work in 
+1. create prdicate solve/0 where we are gonna work in
 2. **Extract all entities** from the puzzle (e.g., names, pets, colors, objects...).
 3. Create a **single flat list** named `Vars` that contains all the variables (e.g., `[Eric, Arnold, Dog, Cat]`).**All variable names must begin with an uppercase letter.**
-4. Add the domain constraint:  
-   `Vars ins 1..N`,  
+4. Add the domain constraint:
+   `Vars ins 1..N`,
    where `N` is the number of houses or positions.
 5. **Group them by logical category** (e.g., Names, Pets, Colors...).
-6. For each group, create a variable group declaration like:  
+6. For each group, create a variable group declaration like:
    `Names = [Eric, Arnold],
-7. For each group, also add a constraint:  
+7. For each group, also add a constraint:
    `all_different(Names),`
 8. End the last line with a coma ',', do not use a point '.'
 9. Do not translate the clues or constraints yet — we will handle that in later steps.
@@ -197,10 +197,13 @@ class PrologEngineStrategy(EngineStrategy):
     def data_structure_prompt(self) -> str:
         return _SYSTEM_PROMPT.format(self.__output_format)
 
-    async def generate_solver_constraints(
-        self, module: Module, metadata: Optional[MetadataWrapper]
-    ) -> str:
-        return ""
+    def data_structure_included(self, constraints: str) -> bool :
+        return re.match(r"\s*solve",constraints)
+
+    async def generate_solver_constraints(self, code: str ) -> str:
+        variables = PrologEngineStrategy.__extract_variables(code)
+        nb_categories = PrologEngineStrategy.__extract_num(code)
+        return (code,variables,nb_categories)
 
     def generate_solver_invocation_command(self, solver_input_file: str) -> list[str]:
         return ["swipl",
@@ -209,6 +212,11 @@ class PrologEngineStrategy(EngineStrategy):
                 "-g",
                 "solve",
                 "-t", "halt"]
+
+    def preprocess_code(self, code: str) -> tuple:
+        variables = LogicAgent._extract_variables(code)
+        nb_categories = LogicAgent._extract_num(code)
+        return (code, variables, nb_categories)
 
     def get_format_prompt(self, solution: str) -> Optional[str]:
         return _FORMAT_MESSAGE.format(
@@ -256,3 +264,20 @@ class PrologEngineStrategy(EngineStrategy):
 
         return "\n".join(f"{i+1} - {', '.join(ligne)}" for i, ligne in enumerate(res))
 
+    @staticmethod
+    def __extract_variables(text: str) -> Optional[List[str]]:
+        # On capture ce qu’il y a entre "Vars = [" et "]"
+        match = re.search(r'Vars\s*=\s*\[(.*?)\]', text, re.DOTALL)
+        if match:
+            content = match.group(1)
+            variables = [v.strip() for v in content.split(',') if v.strip()]
+            return variables
+        else:
+            return None
+
+    @staticmethod
+    def __extract_num(text: str) -> int:
+        match = re.search(r"Vars\s+ins\s+1\.\.(\d)",text, re.DOTALL)
+        if match:
+            return int(match.group(1))
+        return None

@@ -39,6 +39,11 @@ class EngineStrategy(ABC):
     constraint solvers from each other.
     """
 
+    def configure(self, logger_factory, puzzle, output_format):
+        self.logger = logger_factory.create()
+        self.puzzle = puzzle
+        self.output_format = output_format
+
     @property
     @abstractmethod
     def constraints_prompt(self) -> list[str]:
@@ -61,6 +66,10 @@ class EngineStrategy(ABC):
         ...
 
     @abstractmethod
+    def data_structure_included(self, constraints: str) -> bool:
+        ...
+
+    @abstractmethod
     async def generate_solver_constraints(
         self, module: Module, metadata: Optional[MetadataWrapper]
     ) -> str:
@@ -74,6 +83,13 @@ class EngineStrategy(ABC):
             module (Module): Logic.py Python module to translate.
         Returns:
             Solver-specific constraints to later pass into solver engine.
+        """
+        ...
+
+    @abstractmethod
+    def preprocess_code(self, code: str) -> tuple:
+        """
+        Pour extraire les infos nécessaires avant d’envoyer au solveur
         """
         ...
 

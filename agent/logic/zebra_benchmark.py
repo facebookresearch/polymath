@@ -17,8 +17,9 @@ import time
 import aiofiles
 
 from agent.logic.agent import LogicAgent
-from agent.logic.prolog_engine_strategy import PrologEngineStrategy
-from agent.logic.cbmc_search_engine_strategy import CBMCSearchEngineStrategy
+from agent.logic.engine_strategy_factory import EngineStrategyFactory
+from agent.logic.engine_strategy_factory import PrologStrategyFactory
+from agent.logic.engine_strategy_factory import CbmcStrategyFactory
 from agent.logic.engine_strategy import EngineStrategy
 from agent.logic.model_only import ModelOnlySolver
 from aiofiles.base import AiofilesContextManager
@@ -55,6 +56,7 @@ class ZebraBenchmark:
         eval_json_file_name: str,
         generator: str,
         model_name: str,
+        solver_factory: EngineStrategyFactory,
         enable_stderr_log: bool = True,
         generate_training_data: bool = False,
         zebra_input_dataset_path: Optional[str] = None,
@@ -83,6 +85,7 @@ class ZebraBenchmark:
         self.__eval_json_file_name = eval_json_file_name
         self.__output_dataset_lock = Lock()
         self.__generator: str = generator
+        self.__solver_factory = solver_factory
         self.__model_name: str = model_name
         self.__model_only: bool = model_only
         self.__enable_stderr_log: bool = enable_stderr_log
@@ -106,9 +109,7 @@ class ZebraBenchmark:
                 module_path, "../../datasets/grid_mode/test-00000-of-00001.parquet"
             )
         self.__chat_completion_1: ChatCompletion = None
-        self.__chat_completion_2: ChatCompletion = None
         self.__logger_factory = None
-
 
     async def __aenter__(self) -> "ZebraBenchmark":
         if self.__output_dataset_context:
@@ -121,12 +122,8 @@ class ZebraBenchmark:
         self.__logger_factory = LoggerFactory(log_stream, self.__enable_stderr_log)
 
         self.__chat_completion_1 = await create_chat_completion(
-             self.__logger_factory, self.__model_name, gpu_id= -1
+            self.__logger_factory, self.__model_name, gpu_id= 0
         ).__aenter__()
-        
-        #self.__chat_completion_2 = await create_chat_completion(
-        #        self.__logger_factory, self.__model_name, gpu_id=1
-        #        ).__aenter__()        
 
         return self
 
@@ -140,10 +137,7 @@ class ZebraBenchmark:
             await self.__output_dataset_context.__aexit__(exc_type, exc_value, exc_tb)
 
         if self.__chat_completion_1:
-            await self.__chat_completion_1.__aexit__(exc_type, exc_value, exc_tb)
-
-        #if self.__chat_completion_2:
-        #    await self.__chat_completion_2.__aexit__(exc_type, exc_value, exc_tb)
+           await self.__chat_completion_1.__aexit__(exc_type, exc_value, exc_tb)
 
         if self.__logger_factory:
             self.__logger_factory.__exit__(exc_type, exc_value, exc_tb)
@@ -159,7 +153,7 @@ class ZebraBenchmark:
             table: Table = dataset.read_row_group(row_group_index)
             rows: list[dict[str, Any]] = table.to_pylist()
             for i, task in enumerate(rows):
-                model = self.__chat_completion_1 # if i % 2 == 0 else self.__chat_completion_2
+                model = self.__chat_completion_1
                 if self.__filter_dataset(task):
                     await pool.submit(lambda task=task: self.run_task(eval_json, task, model))
         await pool.gather()
@@ -174,13 +168,12 @@ class ZebraBenchmark:
         Retourne True si elles sont identiques, False sinon.
         """
         if not outcome:
-        	print("Erreur : outcome est vide ou None")        
-        	return None, None                                      
-        
+                print("Erreur : outcome est vide ou None")
+                return None, None
+
         rows = solution["rows"]
         header = solution["header"]
-        
-        success = True
+
         nb_err = 0
         # Convertir solution1 en dict comparable
         expected = {}
@@ -188,18 +181,22 @@ class ZebraBenchmark:
             house_id = f"House {idx+1}"
             expected[house_id] = {header[i]: row[i] for i in range(1, len(header))}
 
-        outcome = loads(outcome)
+        try:
+            outcome = loads(outcome)
+        except:
+            return None,None
         for house_id, expected_attrs in expected.items():
             given_attrs = outcome["solution"][house_id]
             for key, expected_value in expected_attrs.items():
                 given_value = given_attrs.get(key)
-                if expected_value.lower() != given_value.lower():
+                if expected_value.replace(" ", "").replace("_", "").lower() != given_value.replace(" ","").replace("_","").lower():
                     print(f"❌ {id=} Erreur dans {house_id}, champ '{key}': attendu '{expected_value}', obtenu '{given_value}'")
-                    success = False
                     nb_err +=1
+
+        success = nb_err == 0
         if success:
             print(f"✅ {id=}Les deux solutions sont identiques.")
-        
+
         return success, nb_err
 
 
@@ -218,7 +215,7 @@ class ZebraBenchmark:
         output_format: str = ZebraBenchmark.get_format(expected_solution)
 
         result_trace = ResultTrace(task_id)
-        engine_strategy : EngineStrategy = CBMCSearchEngineStrategy(
+        engine_strategy : EngineStrategy = self.__solver_factory.create(
             self.__logger_factory, puzzle, output_format
         )
         solver = (
@@ -228,10 +225,11 @@ class ZebraBenchmark:
                     result_trace,
                     puzzle,
                     output_format,
+                    expected_solution,
                 )
                 if self.__model_only
                 else LogicAgent(
-                        self.__logger_factory, model, engine_strategy, result_trace
+                        self.__logger_factory, model, engine_strategy, result_trace, expected_solution
                 )
         )
         await solver.solve()
@@ -242,7 +240,7 @@ class ZebraBenchmark:
 
 
         if not self.__output_dataset_context:
-            success, nb_err=self.compare_solutions(task_id, expected_solution, result_trace.solution)
+            success, nb_err =self.compare_solutions(task_id, expected_solution, result_trace.solution)
             eval_json.append(
                 {
                     "session_id": task_id,
@@ -256,9 +254,11 @@ class ZebraBenchmark:
                     "id": task_id,
                     "size": task["size"],
                     "puzzle": puzzle,
-                    #"created_at": task["created"],
+                    "created_at": task["created_at"],
                     "success":success,
-                    "error_nb":nb_err,
+                    "nb_err": nb_err,
+                    "better_prompt": engine_strategy.constraints_prompt if result_trace.revise_success else None,
+                    "better_tempertature":solver.__curr_temperature if result_trace.revise_success else None ,
                     "polymath_metadata": {
                         "num_agent_retries": result_trace.num_agent_retries,
                         "num_logic_py_syntax_errors": result_trace.num_logic_py_syntax_errors,
@@ -511,17 +511,18 @@ async def main():
 
 ##Llama Local
         (
-          path.join(module_path, "Llama-3.3-70B@Instruct-all-model_only.json"),
+          path.join(module_path, "Llama-3.3-70B@Instruct-Review.json"),
          "Llama_models/Llama-70B-v3.3@Instruct",
          "/srv/data/Llama-3.3-70B-Instruct",
        ),
     ]
+    Solver_factory: EngineStrategyFactory = PrologStrategyFactory()
     for model in models:
         async with ZebraBenchmark(
                 model[0],
                 model[1],
                 model[2],
-                model_only = True,
+                solver_factory = Solver_factory,
                 zebra_input_dataset_path = path.join(module_path,"dataset/test-00000-of-00001.parquet")
         ) as benchmark:
             await benchmark.run()

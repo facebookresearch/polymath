@@ -21,8 +21,6 @@ from inference.client import InferenceClient
 
 from judge.result_trace import ResultTrace
 
-from libcst import MetadataWrapper, Module, parse_module, ParserSyntaxError
-
 
 # Sent if an expected code snippet was not found.
 NO_CODE_FOUND_MESSAGE: str = """I could not find the requested output code snippet in your last message. Please make sure you mark it as follows:
@@ -43,80 +41,6 @@ RETRY_COUNT: int = 5
 
 # Constraints taking longer to solve than this are likely incorrect
 _SOLVER_TIMEOUT: float = 15
-
-ERROR_MESSAGE = r"""
-You are an expert in formal verification and static analysis of Python programs extended with domain-specific languages.
-
-I will provide you with two things:
-1. A Python code snippet that includes domain-specific annotations.
-2. An error output from a formal verification tool.
-
-Your task is to:
-- Carefully analyze the code.
-- Understand the error messages.
-- Provide a clear and concise explanation of each error, including:
-  - What the error means.
-  - What part of the code is responsible.
-  - How to fix the code to resolve the error.
-
-** do not try to solve the problem your self.
-
-Be precise and structured in your explanation.
-
-### Code:
-```python
-{}
-```
-### Error:
-```
-{}
-```
-
-Please explain clearly:
-
-Why the verifier reports these errors and What changes are needed in the code to fix them.
-
-i am gonna walk you through an exemple:
-Code :
-
-class house:
-    name: Unique[Domain[str, "peter", "eric", "arnold"]]
-    hobby: Unique[Domain[str, "photography", "cooking", "gardening"]]
-
-class solution:
-    houses: list[house, 3]
-
-def validate(solution: solution) -> None:
-    # 1. Eric is somewhere to the left of the person who enjoys gardening.
-    eric = nondet(solution.houses)
-    assume(eric.name == "eric")
-    gardener = nondet(solution.houses)
-    assume(gardener.hobby == "gardening")
-    assert solution.houses.index(eric) < solution.houses.index(gardener)
-
-    # 2. Arnold is not in the third house.
-    arnold = nondet(solution.houses)
-    assume(arnold.name == "arnold")
-    assert solution.houses.index(arnold)!= 2
-
-    # 3. Arnold is not in the second house.
-    assert arnold not in solution.houses[1:2]
-
-
-Erreur:
-```
-"syntax error before 'not'",
-```
-
-Explanation:
-- The parser encountered an unexpected keyword `not` at a position where it expected a different syntax structure.
-- The error occurs in the line `assert arnold not in solution.houses[1:2]`.
-- This might be due to parser limitations or the static analyzer not supporting `not in` directly on slices in assertions involving nondeterministic objects.
--  Use an explicit inequality or alternative expression:
-  assert solution.houses.index(arnold) != 1
-
-
-"""
 
 class LogicAgent(Solver):
     """
@@ -156,6 +80,15 @@ class LogicAgent(Solver):
         self.__result_trace: ResultTrace = result_trace
         self.__collect_pyre_type_information: bool = collect_pyre_type_information
         self.__expected_solution = expected_solution
+        self.__allow_revise_prompt = True
+        self.__retrie_with_revised_prompt = False
+        self.__enter_revise = False
+        self.__num_revise = 0
+        self.__max_num_revise = 3
+        self.__curr_temperature = 0
+        self.__max_temperature = 1
+
+
 
     async def solve(self) -> None:
         """
@@ -182,15 +115,31 @@ Constraints:
                 attempt_failed = True
 
             self.__result_trace.messages.extend(self.__client.conversation)
+
             if not attempt_failed:
                 break
 
-            #self.__client.conversation.clear()
-            attempt += 1
-            if attempt >= RETRY_COUNT:
-                break
+            if not self.__retrie_with_revised_prompt:
+                attempt += 1
+                if attempt >= RETRY_COUNT:
+                    break
+            else:
+                self.__client.conversation.clear()
+                self.__num_revise += 1
+                self.__retrie_with_revised_prompt = False
+                if self.__num_revise >= self.__max_num_revise:
+                    if self.__curr_temperature < self.__max_temperature :
+                        self.__curr_temperature += self.__max_temperature / 3
+                        self.__client.set_temperature(self.__curr_temperature)
+                        self.__num_revise = 0
+                        self.__engine_strategy.reset_constraints_prompt()
+                    else:
+                        break
+
             self.__logger.warning("Retrying solution finding due to recoverable error.")
             self.__result_trace.num_agent_retries += 1
+
+        self.__client.reset_temperature()
 
     async def __solve(self) -> bool:
         """
@@ -212,7 +161,29 @@ Constraints:
         if not solution:
             return retry_if_failed
 
-        await self.__format_solution(solution)
+        self.__result_trace.solution = await self.__format_solution(solution)
+
+        if self.__allow_revise_prompt:
+            success, err = LogicAgent.__compare_solutions(self.__expected_solution, self.__result_trace.solution)
+            if not success:
+                self.__enter_revise = True
+                self.__logger.warning("Retrying prompt revising due to incorrect result.")
+                prompt = self.__engine_strategy.get_revise_prompt(
+                        os.linesep.join(self.__engine_strategy.constraints_prompt),
+                        self.__result_trace.python_code,
+                        err
+                )
+                message = Message(Role.USER,prompt)
+                finish_reason, ai_response = await self.__client.create(message)
+                self.__engine_strategy.set_constraints_prompt(ai_response)
+                self.__retrie_with_revised_prompt = True
+                return True
+
+            if self.__enter_revise:
+                self.__result_trace.revise_success = True
+                self.__engine_strategy.set_initial_constraints_prompt(os.linesep.join(self.__engine_strategy.constraints_prompt))
+
+
         return False
 
     async def __generate_data_structure(self) -> Optional[str]:
@@ -271,49 +242,41 @@ Constraints:
                     return None, False
                 all_constraints.append(constraints)
 
-            python_code: str = f"""
+            constraints = os.linesep.join(all_constraints)
+            if self.__engine_strategy.data_structure_included(contraints):
+                python_code: str = f"""
+{self.__engine_strategy.python_code_prefix}
+{constraints}
+"""
+            else :
+                python_code: str = f"""
 {self.__engine_strategy.python_code_prefix}
 {data_structure}
-{os.linesep.join(all_constraints)}
-                              """
-            print("PyTHON CODE")
-            print(python_code)
-            print("\n\n")
+{constraints}
+"""
+            print(f"PYTHON CODE \n{python_code}")
+
             self.__result_trace.python_code = python_code
 
-            module: Module
-            metadata: Optional[MetadataWrapper]
             try:
-                if self.__collect_pyre_type_information:
-                    metadata = await ModuleWithTypeInfoFactory.create_module(
-                        python_code
-                    )
-                    module = metadata.module
-                else:
-                    start = time.perf_counter()
-                    module = parse_module(python_code)
-                    metadata = None
-                    end = time.perf_counter()
-                    self.__result_trace.libcst_time = end - start
+                start = time.perf_counter()
+                preprocessed: str = await self.__engine_strategy.generate_solver_constraints(
+                    python_code
+                )
+                end = perf_counter()
+                self.__result_trace.libcst_time = end - start
             except ParserSyntaxError:
                 self.__logger.exception("Parser error when reading constraint")
                 self.__result_trace.num_logic_py_syntax_errors += 1
                 return None, True
-            solver_constraints: str = (
-                await self.__engine_strategy.generate_solver_constraints(
-                    module, metadata
-                )
-            )
 
-            print("\n\n")
-            print("CONSTRAINT To CBMC : ")
-            print(solver_constraints)
-            print("\n\n")
+            solver_constraints = preprocessed[0]
+            print(f"CONSTRAINT: {solver_constraints}")
+
             self.__result_trace.solver_constraints = solver_constraints
 
-            solver_input_file_suffix: str = (
-                self.__engine_strategy.solver_input_file_suffix
-            )
+            solver_input_file_suffix: str = self.__engine_strategy.solver_input_file_suffix
+
             solver_exit_code: int
             stdout: str
             stderr: str
@@ -323,7 +286,6 @@ Constraints:
                 await file.write(solver_constraints)
                 await file.close()
                 solver_input_file: str = str(file.name)
-                print(f"File : {solver_input_file}")
                 try:
                     start = time.perf_counter()
                     solver_exit_code, stdout, stderr = await Subprocess.run(
@@ -347,27 +309,39 @@ Constraints:
                     return None, True
                 except Exception as e :
                     print("EREEUR Lors de l'execution de cbmc ",e)
-                    #finish_reason, ai_response = await self.__chat_completion.create(ERROR_MESSAGE.format(python_code,e))
-                    #self.__client.add_message(ai_response)
+                    finish_reason, ai_response = await self.__client.create(Message(Role.USER,ERROR_MESSAGE.format(python_code,e)))
+                    self.__client.add_message(ai_response,Role.USER)
                     return None, True
 
-            self.__result_trace.solver_output = f"{stdout}{stderr}"
+            self.__result_trace.solver_output = f"{stdout}\n{stderr}"
             self.__result_trace.solver_exit_code = solver_exit_code
 
-            #print(f"SOLVER EXIT CODE {solver_exit_code}")
             solver_outcome, output = self.__engine_strategy.parse_solver_output(
-                solver_exit_code, stdout, stderr
+                solver_exit_code, (stdout, *preprocessed[1:] ), stderr
             )
             match solver_outcome:
                 case SolverOutcome.SUCCESS:
                     return output, False
                 case SolverOutcome.FATAL:
-                    print("Cbmc Erreur")
-                    print(stderr)
-                    print("\n\n")
-                    #finish_reason, ai_response = await self.__chat_completion.create(ERROR_MESSAGE.format(python_code,stderr))
-                    #self.__client.add_message(ai_response)
-                    #self.__result_trace.num_solver_errors += 1
+                    if self.__allow_revise_prompt:
+                        self.__logger.warning(f"Retrying prompt revising due to an Error : \n {stderr}.")
+                        prompt = self.__engine_strategy.get_revise_prompt(
+                            os.linesep.join(self.__engine_strategy.constraints_prompt),
+                            self.__result_trace.python_code,
+                            stderr
+                        )
+                        self.__retrie_with_revised_prompt = True
+                    else :
+                        prompt = ERROR_MESSAGE.format(python_code,stderr)
+
+                    finish_reason, ai_response = await self.__client.create(Message(Role.USER,prompt))
+
+                    if self.__allow_revise_prompt:
+                        self.__engine_strategy.set_constraints_prompt(ai_response)
+                    else:
+                        self.__client.add_message(ai_response,Role.USER)
+                    self.__result_trace.num_solver_errors += 1
+
                     return None, True
                 case SolverOutcome.RETRY:
                     attempts += 1
@@ -411,7 +385,7 @@ Constraints:
         else:
             formatted_solution = solution
 
-        self.__result_trace.solution = formatted_solution
+        return  formatted_solution
 
     async def __receive_code_response(
         self, expected_content_description: str
@@ -475,4 +449,48 @@ Constraints:
                     pos = code_marker.start() + 1
 
         groups: Optional[Match] = CODE_EXTRACTION_PATTERN.match(response_text)
-        return groups.group(1) if groups is not None else None
+        if groups is None :
+            try:
+                return json.loads(response_text)
+            except:
+                return None
+
+        return groups.group(1)
+
+    @staticmethod
+    def __compare_solutions(solution, outcome):
+        """
+        Compare deux solutions de puzzle logique et affiche les différences.
+        Retourne True si elles sont identiques, False sinon.
+        """
+        if not outcome:
+            return False, ["Erreur : outcome est vide ou None"]
+
+        rows = solution["rows"]
+        header = solution["header"]
+
+        # Convertir solution1 en dict comparable
+        expected = {}
+        for idx, row in enumerate(rows):
+            house_id = f"House {idx+1}"
+            expected[house_id] = {header[i]: row[i] for i in range(1, len(header))}
+
+        try:
+            outcome = json.loads(outcome)
+        except:
+            return None,None
+
+        success = True
+        res = []
+        for house_id, expected_attrs in expected.items():
+            given_attrs = outcome["solution"][house_id]
+            for key, expected_value in expected_attrs.items():
+                given_value = given_attrs.get(key)
+                if expected_value.replace(" ", "").replace("_", "").lower() != given_value.replace(" ","").replace("_","").lower():
+                    res.append(f"❌ Erreur dans {house_id}, champ '{key}': attendu '{expected_value}', obtenu '{given_value}'")
+                    success = False
+
+        if success:
+            return True , [f"✅ Les deux solutions sont identiques."]
+
+        return success, res
