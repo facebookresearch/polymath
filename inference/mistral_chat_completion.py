@@ -40,7 +40,6 @@ class MistralChatCompletion(ChatCompletion):
         exc_value: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
-        # Pas de ressources particulières à libérer ici
         pass
 
     async def _load_model(self):
@@ -63,16 +62,15 @@ class MistralChatCompletion(ChatCompletion):
             return self.__model
 
     def _convert_conversation(self, conversation: List[Message]) -> ChatCompletionRequest:
-        # Convertit la liste inference.chat_completion.Message en mistral_common.protocol.instruct.request.ChatCompletionRequest
         mistral_msgs = []
         for msg in conversation:
-                match msg.role:
-                        case "user":
-                                mistral_msgs.append(UserMessage(content=msg.text))
-                        case "assistant":
-                                mistral_msgs.append(SystemMessage(content=msg.text))
-                        case "system":
-                                mistral_msgs.append(AssistantMessage(content=msg.text))
+            match msg.role:
+                case "user":
+                    mistral_msgs.append(UserMessage(content=msg.text))
+                case "assistant":
+                    mistral_msgs.append(SystemMessage(content=msg.text))
+                case "system":
+                    mistral_msgs.append(AssistantMessage(content=msg.text))
 
         return ChatCompletionRequest(messages=mistral_msgs)
 
@@ -81,10 +79,6 @@ class MistralChatCompletion(ChatCompletion):
     ) -> Tuple[FinishReason, Optional[str]]:
         tokenizer, model = await self._load_model()
 
-        #print("PAYLOAD")
-        #for msg in conversation :
-        #        print(f"{msg.role}: {msg.text}")
-        #print("\n\n")
         request = self._convert_conversation(conversation)
 
         loop = asyncio.get_running_loop()
@@ -103,10 +97,6 @@ class MistralChatCompletion(ChatCompletion):
 
         try:
             result = await loop.run_in_executor(None, generate_sync)
-            #print("\nRESULT\n")
-            #if result:
-            #        print(result)
-            # On suppose que la génération s'arrête naturellement ou par token eos
             return FinishReason.STOPPED, result
         except RuntimeError as e:
             self.__logger.error(f"RuntimeError during generation: {e}")
@@ -114,4 +104,3 @@ class MistralChatCompletion(ChatCompletion):
         except Exception as e:
             self.__logger.error(f"Unexpected error during generation: {e}")
             return FinishReason.RETRYABLE_ERROR, None
-

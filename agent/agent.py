@@ -20,9 +20,8 @@ from inference.chat_completion import ChatCompletion, Role
 from inference.client import InferenceClient
 
 from judge.result_trace import ResultTrace
-from agent.logic.prompt_reviser import PromptReviser
-from agent.logic.no_op_prompt_reviser import NoOpPromptReviser
-from agent.logic.error_handler import ErrorHandler
+
+from agent.logic.analysis.utils import compare_zebra_solutions
 
 # Sent if an expected code snippet was not found.
 NO_CODE_FOUND_MESSAGE: str = """I could not find the requested output code snippet in your last message. Please make sure you mark it as follows:
@@ -58,11 +57,10 @@ class LogicAgent(Solver):
         chat_completion: ChatCompletion,
         engine_strategy: EngineStrategy,
         result_trace: ResultTrace,
-        expected_solution: str = None
-        prompt_reviser: PromptReviser = None,
+        expected_solution: str,
+        prompt_reviser: PromptReviser = None
         collect_pyre_type_information: bool = False,
-        error_handler: ErrorHandler: None
-    ) -> None:
+        ) -> None:
         """
         Initialises inference client with default settings and the provided
         model name.
@@ -84,10 +82,10 @@ class LogicAgent(Solver):
         self.__result_trace: ResultTrace = result_trace
         self.__collect_pyre_type_information: bool = collect_pyre_type_information
         self.__expected_solution = expected_solution
-        self.__prompt_reviser = prompt_reviser if prompt_reviser else NoOpPromptReviser()
+        self.__prompt_reviser = prompt_reviser
+        self.__allow_revise_prompt = prompt_reviser not None
+        self.__retry_with_revised_prompt = False
         self.__enter_revise = False
-        self.__error_handler = error_handler
-        self.__error_handling = error_handler not None
 
 
     async def solve(self) -> None:
@@ -119,9 +117,9 @@ Constraints:
             if not attempt_failed:
                 break
 
-            continue_retrying = self.__prompt_reviser.on_failure()
-            self.__retry_with_revised_prompt = False
-
+            if self.__retry_with_revised_prompt:
+                continue_retrying = self.__prompt_reviser.on_failure()
+                self.__retry_with_revised_prompt = False
 
             attempt += 1
             if not continue_retrying or attempt >= RETRY_COUNT:
@@ -154,21 +152,23 @@ Constraints:
 
         self.__result_trace.solution = await self.__format_solution(solution)
 
-        success, err = self.__prompt_reviser.compare(self.__expected_solution, self.__result_trace.solution)
+        if self.__allow_revise_prompt:
+            success, _, err = compare_zebra_solutions(self.__expected_solution, self.__result_trace.solution)
+            if not success:
+                self.__enter_revise = True
+                self.__logger.warning("Retrying prompt revising due to incorrect result.")
+                self.__prompt_reviser.revise(
+                        os.linesep.join(self.__engine_strategy.constraints_prompt),
+                        self.__result_trace.python_code,
+                        err
+                )
+                self.__retry_with_revised_prompt = True
+                return True
 
-        if not success:
-            self.__enter_revise = True
-            self.__logger.warning("Retrying prompt revising due to incorrect result.")
-            self.__prompt_reviser.revise(
-                os.linesep.join(self.__engine_strategy.constraints_prompt),
-                self.__result_trace.python_code,
-                err
-            )
-            return True
+            if self.__enter_revise:
+                self.__result_trace.revise_success = True
+                self.__engine_strategy.set_initial_constraints_prompt(os.linesep.join(self.__engine_strategy.constraints_prompt))
 
-        if self.__enter_revise:
-            self.__result_trace.revise_success = True
-            self.__engine_strategy.set_initial_constraints_prompt()
 
         return False
 
@@ -292,9 +292,13 @@ Constraints:
                     self.__result_trace.num_solver_timeouts += 1
                     return None, True
                 except Exception as e :
-                    if self.__error_handling:
-                        self.__error_handler.revise(python_code, e)
-                        continue
+                    finish_reason, ai_response = await self.__client.create(Message(Role.USER,ERROR_MESSAGE.format(python_code,e)))
+                    :x
+
+
+
+
+                    self.__client.add_message(ai_response,Role.USER)
                     return None, True
 
             self.__result_trace.solver_output = f"{stdout}\n{stderr}"
@@ -307,22 +311,27 @@ Constraints:
                 case SolverOutcome.SUCCESS:
                     return output, False
                 case SolverOutcome.FATAL:
-                    self.__logger.warning(f"Retrying prompt revising due to an Error : \n {stderr}.")
-                    self.prompt_reviser.revise(
-                        os.linesep.join(self.__engine_strategy.constraints_prompt),
-                        self.__result_trace.python_code,
-                        stderr
-                    )
+                    if self.__allow_revise_prompt:
+                        self.__logger.warning(f"Retrying prompt revising due to an Error : \n {stderr}.")
+                        prompt = self.__engine_strategy.get_revise_prompt(
+                            os.linesep.join(self.__engine_strategy.constraints_prompt),
+                            self.__result_trace.python_code,
+                            stderr
+                        )
+                        self.__retry_with_revised_prompt = True
+                    else :
+                        prompt = ERROR_MESSAGE.format(python_code,stderr)
+
+                    finish_reason, ai_response = await self.__client.create(Message(Role.USER,prompt))
+
+                    if self.__allow_revise_prompt:
+                        self.__engine_strategy.set_constraints_prompt(ai_response)
+                    else:
+                        self.__client.add_message(ai_response,Role.USER)
+                    self.__result_trace.num_solver_errors += 1
+
                     return None, True
-
-                    if self.__error_handling :
-                        self.__logger.warning(f"Retrying to find solution due to an Error : \n {stderr}.")
-                        self.__error_handler.revise(python_code, stderr)
-                        continue
-
-                    return None, True
-
-                    case SolverOutcome.RETRY:
+                case SolverOutcome.RETRY:
                     attempts += 1
                     if attempts >= RETRY_COUNT:
                         self.__logger.error(

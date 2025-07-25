@@ -1,0 +1,61 @@
+{
+  "categories": {
+    "Small": {
+      "average_times": {
+        "data_structure_time": 11.801716196215557,
+        "constraints_time": 36.83797210094535,
+        "solver_time": 0.16543647842186146,
+        "libcst_time": 0.01797001801824081,
+        "format_time": 15.347160712643609
+      },
+      "total": 1.0695042584374101,
+      "successes": 309,
+      "failures": 11,
+      "success_per_cell": 309.0
+    },
+    "Medium": {
+      "average_times": {
+        "data_structure_time": 15.248281857228358,
+        "constraints_time": 77.40159236868197,
+        "solver_time": 0.3034452105918068,
+        "libcst_time": 0.02439281249665198,
+        "format_time": 24.046693343531764
+      },
+      "total": 1.9504067598755093,
+      "successes": 258,
+      "failures": 22,
+      "success_per_cell": 261.7055555555555
+    },
+    "Large": {
+      "average_times": {
+        "data_structure_time": 18.76591635885576,
+        "constraints_time": 116.74044536370965,
+        "solver_time": 0.5259519526153599,
+        "libcst_time": 0.028854471931190347,
+        "format_time": 33.022005529204904
+      },
+      "total": 2.818052894605281,
+      "successes": 184,
+      "failures": 16,
+      "success_per_cell": 189.4277777777778
+    },
+    "X-Large": {
+      "average_times": {
+        "data_structure_time": 25.125367284461028,
+        "constraints_time": 192.21931190888137,
+        "solver_time": 1.1971645370157784,
+        "libcst_time": 0.035179691905141225,
+        "format_time": 47.532326991095395
+      },
+      "total": 4.435155840222645,
+      "successes": 168,
+      "failures": 32,
+      "success_per_cell": 181.08666666666667
+    }
+  },
+  "total_time_across_all_puzzles": 38.98328337384498,
+  "total_succes": 919,
+  "total_failure": 81,
+  "Succes_per_cell": 94.122,
+  "Result": 91.9
+}

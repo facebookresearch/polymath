@@ -1,9 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
 from logging import Logger
 from types import TracebackType
 from typing import Callable, Optional, Tuple
@@ -69,10 +63,6 @@ class GroqChatCompletion(ChatCompletion):
             "temperature": self.__temperature,
             "max_tokens": self.__max_gen_tokens,
         }
-        #print(f"URL: {self.__api_url}")
-        #print(f"Headers: {headers}")
-        #print(f"Payload: {json.dumps(payload, indent=2)}")
-
 
         async with aiohttp.ClientSession() as session:
             try:
@@ -83,10 +73,6 @@ class GroqChatCompletion(ChatCompletion):
                         return FinishReason.RETRYABLE_ERROR, None
 
                     data = await response.json()
-
-                    # Garde pour debug
-                    self.__logger.debug(f"Groq API raw response: {data}")
-                    #print(f"Groq API raw response: {data}")
 
                     finish_reason = data["choices"][0]["finish_reason"]
                     content = data["choices"][0]["message"]["content"]

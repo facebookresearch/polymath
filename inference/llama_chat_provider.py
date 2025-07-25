@@ -26,7 +26,6 @@ class LlamaChatCompletion(ChatCompletion):
         self.__max_gen_tokens = max_gen_tokens
         self.__temperature = temperature
         self.__initial_temperature = temperature
-        print(f"model name : {self.__model_path}")
         self.__gpu_id = {"" : f"cuda:{gpu_id}"} if gpu_id != -1 else "auto"
         self.__model = None  # (Chat, tokenizer, model)
         self.__lock = asyncio.Lock()
@@ -70,7 +69,7 @@ class LlamaChatCompletion(ChatCompletion):
                     torch_dtype=torch.float16
                 )
 
-                print(model.hf_device_map)
+                #print(model.hf_device_map)
                 chat = pipeline(
                     "text-generation",
                     model=model,
@@ -84,19 +83,16 @@ class LlamaChatCompletion(ChatCompletion):
             return self.__model
 
     def _convert_conversation(self, conversation: List[Message]) -> List[Dict[str, str]]:
-        # Convertit la liste inference.chat_completion.Message en mistral_common.protocol.instruct.request.ChatCompletionRequest
-        llama_msgs = []
-        for msg in conversation:
-            llama_msgs.append({"role":msg.role,"content":msg.text})
-        return llama_msgs
+
+        return [{"role":msg.role,"content":msg.text} for msg in conversation]
 
     def extract_assistant_code(self,text: str) -> str:
         matches = re.findall(r"<\|start_header_id\|>assistant<\|end_header_id\|>(.*?)(?=<\|start_header_id\|>|<\|eot_id\|>|$)",text,re.DOTALL)
-        #print(matches)
+
         match = matches[len(matches)-1]
 
         code = match.strip()
-        # Détection de l'indentation commune pour nettoyage
+
         lines = code.splitlines()
         if lines:
             indent = min((len(line) - len(line.lstrip())) for line in lines if line.strip())
@@ -110,15 +106,14 @@ class LlamaChatCompletion(ChatCompletion):
         self, conversation: List[Message]
     ) -> Tuple[FinishReason, Optional[str]]:
         chat, tokenizer, model  = self.__model
-        
+
         conversation= self._convert_conversation(conversation)
         loop = asyncio.get_running_loop()
 
         def generate_sync():
-            # Formatage avec le template chat LLaMA
+
             prompt = tokenizer.apply_chat_template(conversation, tokenize=False, add_generation_prompt=True)
 
-            # Génération optimisée
             outputs = chat(
                 prompt,
                 max_new_tokens=self.__max_gen_tokens,
@@ -130,7 +125,6 @@ class LlamaChatCompletion(ChatCompletion):
             return outputs
         try:
             result = await loop.run_in_executor(self.__executor, generate_sync)
-            print(f"\033[91m Result \033[00m : {result[0]["generated_text"]}")
             return FinishReason.STOPPED, self.extract_assistant_code(result[0]["generated_text"])
         except RuntimeError as e:
             self.__logger.error(f"RuntimeError during generation: {e}")
@@ -144,4 +138,3 @@ class LlamaChatCompletion(ChatCompletion):
 
     def reset_temperature(self) -> None:
         self.__temperature = self.__initial_temperature
-

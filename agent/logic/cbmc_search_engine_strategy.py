@@ -148,11 +148,11 @@ class CBMCSearchEngineStrategy(EngineStrategy):
         return _SYSTEM_PROMPT.format(self.__output_format)
 
     def data_structure_included(self, constraints: str) -> bool :
-        return re.match(r"\s*class",constraints)
+        return re.match(r"\s*class",constraints) not None
 
     async def generate_solver_constraints(
             self, python_code: str, collect_pyre_type_information: bool,
-    ) -> str:
+    ) -> Tuple[str, *tuple[Any, ...]]:
         module: Module
         metadata: Optional[MetadataWrapper]
         if collect_pyre_type_information:
@@ -184,14 +184,13 @@ class CBMCSearchEngineStrategy(EngineStrategy):
         self, exit_code: int, stdout: str, stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         if exit_code == 10:
-            cbmc_txt_output = stdout
+            cbmc_output = stdout[0]
             parsed_output: str = CBMCSearchEngineStrategy.__parse_cbmc_solution(
-                cbmc_txt_output
+                cbmc_output
             )
             return SolverOutcome.SUCCESS, parsed_output
 
         if exit_code != 0:
-            print(f"Cbmc {exit_code=} Erreur Fatal in {__file__}")
             return SolverOutcome.FATAL, None
 
         self.__logger.error(
@@ -279,21 +278,28 @@ class CBMCSearchEngineStrategy(EngineStrategy):
             Python-ish expression equivalent to solution output struct in CBMC
             trace.
         """
-        #output_step: Any = [
-        #    step
-        #    for message in cbmc_output
-        #    if "result" in message
-        #    for result in message["result"]
-        #    if result["status"] == "FAILURE"
-        #    for step in result["trace"]
-        #    if step["stepType"] == "output"
-        #][0]
-        #value: Any = output_step["values"][0]
-        value = CBMCSearchEngineStrategy.txt_to_json(cbmc_output)
-        #print(f"CBMC VALUE {value} ")
+        try:
+            cbmc_json_output: Any = loads(stdout)
+            value = CBMCSearchEngineStrategy.__parse_cbmc_solution(cbmc_json_output)
+        except:
+            value = CBMCSearchEngineStrategy.txt_to_json(cbmc_output)
         string_builder = StringIO()
         CBMCSearchEngineStrategy.__cbmc_value_to_string(string_builder, value, "")
         return string_builder.getvalue()
+
+    @staticmethod
+    def __parse_cbmc_json(cbmc_output: Any) -> Any :
+        output_step: Any = [
+            step
+            for message in cbmc_output
+            if "result" in message
+            for result in message["result"]
+            if result["status"] == "FAILURE"
+            for step in result["trace"]
+            if step["stepType"] == "output"
+        ][0]
+        value: Any = output_step["values"][0]
+        return value
 
     @staticmethod
     def txt_to_json(cbmc_output: str) -> Any:

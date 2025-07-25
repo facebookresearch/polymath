@@ -27,7 +27,7 @@ from aiofiles.threadpool.text import AsyncTextIOWrapper
 from concurrency.async_pool import AsyncPool
 
 from dotenv import load_dotenv
-from inference.chat_completion import Message
+from inference.chat_completion import Message, Role
 from inference.chat_completion import ChatCompletion
 from inference.chat_completion_factory import create_chat_completion
 from judge.result_trace import ResultTrace
@@ -41,6 +41,9 @@ from training.lowercase_json import LowerCaseJson
 from training.sample_output_converter import SampleOutputConverter
 from training.sample_output_converter_factory import create_sample_output_converter
 
+from agent.logic.analysis.solution_comparator import SolutionComparator
+from agent.logic.analysis.zebra_comparator import ZebraSolutionComparator
+from agent.logic.error_handler import ErrorHandler
 
 # Used to extract the house number from a formatted solution.
 _ZERO_EVAL_HOUSE_NAME_PATTERN: Pattern = compile("House ([\\d]*)")
@@ -110,6 +113,7 @@ class ZebraBenchmark:
             )
         self.__chat_completion_1: ChatCompletion = None
         self.__logger_factory = None
+        self.zebra_comparator: SolutionComparator = ZebraSolutionComparator()
 
     async def __aenter__(self) -> "ZebraBenchmark":
         if self.__output_dataset_context:
@@ -162,44 +166,6 @@ class ZebraBenchmark:
             async with aiofiles.open(self.__eval_json_file_name, "w") as file:
                 await file.write(dumps(eval_json, indent=4))
 
-    def compare_solutions(self,id,solution, outcome):
-        """
-        Compare deux solutions de puzzle logique et affiche les différences.
-        Retourne True si elles sont identiques, False sinon.
-        """
-        if not outcome:
-                print("Erreur : outcome est vide ou None")
-                return None, None
-
-        rows = solution["rows"]
-        header = solution["header"]
-
-        nb_err = 0
-        # Convertir solution1 en dict comparable
-        expected = {}
-        for idx, row in enumerate(rows):
-            house_id = f"House {idx+1}"
-            expected[house_id] = {header[i]: row[i] for i in range(1, len(header))}
-
-        try:
-            outcome = loads(outcome)
-        except:
-            return None,None
-        for house_id, expected_attrs in expected.items():
-            given_attrs = outcome["solution"][house_id]
-            for key, expected_value in expected_attrs.items():
-                given_value = given_attrs.get(key)
-                if expected_value.replace(" ", "").replace("_", "").lower() != given_value.replace(" ","").replace("_","").lower():
-                    print(f"❌ {id=} Erreur dans {house_id}, champ '{key}': attendu '{expected_value}', obtenu '{given_value}'")
-                    nb_err +=1
-
-        success = nb_err == 0
-        if success:
-            print(f"✅ {id=}Les deux solutions sont identiques.")
-
-        return success, nb_err
-
-
     async def run_task(
         self,
         eval_json: list[dict[str, Any]],
@@ -218,6 +184,7 @@ class ZebraBenchmark:
         engine_strategy : EngineStrategy = self.__solver_factory.create(
             self.__logger_factory, puzzle, output_format
         )
+        error_handler = ErrorHandler(engine_strategy, model)
         solver = (
                 ModelOnlySolver(
                     self.__logger_factory,
@@ -225,11 +192,12 @@ class ZebraBenchmark:
                     result_trace,
                     puzzle,
                     output_format,
-                    expected_solution,
                 )
                 if self.__model_only
                 else LogicAgent(
-                        self.__logger_factory, model, engine_strategy, result_trace, expected_solution
+                        self.__logger_factory, model, engine_strategy, result_trace,
+                        expected_solution = expected_solution,
+                        error_handler = error_handler,
                 )
         )
         await solver.solve()
@@ -240,7 +208,7 @@ class ZebraBenchmark:
 
 
         if not self.__output_dataset_context:
-            success, nb_err =self.compare_solutions(task_id, expected_solution, result_trace.solution)
+            success, nb_err, _ = self.zebra_comparator.compare(expected_solution, result_trace.solution,display=True, task_id=task_id )
             eval_json.append(
                 {
                     "session_id": task_id,

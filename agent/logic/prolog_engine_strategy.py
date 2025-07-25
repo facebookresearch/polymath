@@ -114,6 +114,10 @@ Here is the puzzle description:
 {}
 """
 
+_ERROR_PROMPT = r"""
+
+"""
+
 _REVISE_PROMPT = r"""
 You have previously been asked to convert a logical puzzle into a formal specification using a domain-specific language (DSL). The generated DSL code was incorrect or incomplete, leading to an error or a wrong solution.
 
@@ -177,15 +181,15 @@ class PrologEngineStrategy(EngineStrategy):
         self.__task: str = task
         self.__output_format: str = output_format
         self.curr_constraints_prompt = _CONSTRAINTS_MESSAGE
+        self.curr_erreur: str = None
 
     @property
     def constraints_prompt(self) -> list[str]:
         return [self.curr_constraints_prompt]
 
-    def set_initial_constraints_prompt(self, prompt) -> None:
+    def set_initial_constraints_prompt(self) -> None:
         global _CONSTRAINTS_MESSAGE
-        _CONSTRAINTS_MESSAGE = prompt
-        self.curr_constraints_prompt = _CONSTRAINTS_MESSAGE
+        _CONSTRAINTS_MESSAGE = self.curr_constraints_prompt
 
     def set_constraints_prompt(self, prompt) -> None:
         self.curr_constraints_prompt = prompt
@@ -198,7 +202,7 @@ class PrologEngineStrategy(EngineStrategy):
         return _SYSTEM_PROMPT.format(self.__output_format)
 
     def data_structure_included(self, constraints: str) -> bool :
-        return re.match(r"\s*solve",constraints)
+        return re.match(r"\s*solve",constraints) not None
 
     async def generate_solver_constraints(self, code: str ) -> str:
         variables = PrologEngineStrategy.__extract_variables(code)
@@ -212,11 +216,6 @@ class PrologEngineStrategy(EngineStrategy):
                 "-g",
                 "solve",
                 "-t", "halt"]
-
-    def preprocess_code(self, code: str) -> tuple:
-        variables = LogicAgent._extract_variables(code)
-        nb_categories = LogicAgent._extract_num(code)
-        return (code, variables, nb_categories)
 
     def get_format_prompt(self, solution: str) -> Optional[str]:
         return _FORMAT_MESSAGE.format(
