@@ -1,4 +1,5 @@
-from abc import ABC
+from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional, Tuple
 
 class PromptReviser(ABC):
     """

@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 from agent.logic.prolog_engine_strategy import PrologEngineStrategy
 from agent.logic.cbmc_search_engine_strategy import CBMCSearchEngineStrategy
 from agent.logic.engine_strategy import EngineStrategy
-from logging import logger
+from logging import Logger
+from typing import Callable
 
 class EngineStrategyFactory(ABC):
     """

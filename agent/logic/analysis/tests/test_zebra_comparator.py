@@ -1,5 +1,3 @@
-# tests/test_zebra_comparator.py
-
 import unittest
 from agent.logic.zebra_comparator import ZebraSolutionComparator
 import json
@@ -24,7 +22,7 @@ class TestZebraSolutionComparator(unittest.TestCase):
                 "House 3": {"Color": "Blue", "Nationality": "Japanese"},
             }
         }
-        success, err_count, msg = self.comparator.compare_zebra_solutions(self.solution, json.dumps(outcome))
+        success, err_count, msg = self.comparator.compare(self.solution, json.dumps(outcome))
         self.assertTrue(success)
         self.assertEqual(err_count, 0)
         self.assertIn("Solutions match", msg)
@@ -43,7 +41,7 @@ class TestZebraSolutionComparator(unittest.TestCase):
         self.assertIn("Mismatch in House 1", msg)
 
     def test_invalid_json(self):
-        success, err_count, msg = self.comparator.compare_zebra_solutions(self.solution, "not a json")
+        success, err_count, msg = self.comparator.compare_zebra_solutions(self.solution, "not json")
         self.assertFalse(success)
         self.assertEqual(err_count, 0)
         self.assertIn("not valid JSON", msg)

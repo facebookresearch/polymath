@@ -21,8 +21,9 @@ from inference.client import InferenceClient
 
 from judge.result_trace import ResultTrace
 from agent.logic.prompt_reviser import PromptReviser
-from agent.logic.no_op_prompt_reviser import NoOpPromptReviser
-from agent.logic.error_handler import ErrorHandler
+from agent.logic.null_prompt_reviser import NullPromptReviser
+from agent.logic.base_error_handler import BaseErrorHandler
+from agent.logic.null_error_handler import NullErrorHandler
 
 # Sent if an expected code snippet was not found.
 NO_CODE_FOUND_MESSAGE: str = """I could not find the requested output code snippet in your last message. Please make sure you mark it as follows:
@@ -39,7 +40,7 @@ CODE_EXTRACTION_PATTERN: Pattern = compile(r".*```[^\n]*\n+(.*)```.*", DOTALL)
 CODE_MARKER_PATTERN: Pattern = compile(r"```[^\n]*")
 
 # Number of times we retry an operation, e.g. extracting code from a response.
-RETRY_COUNT: int = 5
+RETRY_COUNT: int = 0
 
 # Constraints taking longer to solve than this are likely incorrect
 _SOLVER_TIMEOUT: float = 15
@@ -55,40 +56,33 @@ class LogicAgent(Solver):
     def __init__(
         self,
         logger_factory: Callable[[str], Logger],
-        chat_completion: ChatCompletion,
+        client: InferenceClient,
         engine_strategy: EngineStrategy,
         result_trace: ResultTrace,
-        expected_solution: str = None
+        expected_solution: str = None,
         prompt_reviser: PromptReviser = None,
-        collect_pyre_type_information: bool = False,
-        error_handler: ErrorHandler: None
+        error_handler: BaseErrorHandler =  None
     ) -> None:
         """
-        Initialises inference client with default settings and the provided
-        model name.
+        Initializes the LogicAgent with its required components.
 
         Args:
-            logger_factory (Callable[[str], Logger]): Logging configuration to
-            use.
-            model_name (str): Name of model to use in inference client.
-            engine_strategy (EngineStrategy): Agent configuration (e.g. CBMC
-            search or SMT conclusion check).
-            result_trace (ResultTrace): Sink for debug and result output data.
-            collect_pyre_type_information (bool): Whether libCST modules should
-            be parsed with type information. This incurs a performance overhead,
-            but is necessary for the Z3 back-end.
-        """
+            logger_factory (Callable[[str], Logger]): Factory to create context-aware loggers.
+            client (InferenceClient): Inference client to communicate with the language model.
+            engine_strategy (EngineStrategy): Defines how prompts and verification logic are structured.
+            result_trace (ResultTrace): Sink for collecting debug information and results.
+            expected_solution (str, optional): Reference solution for evaluation or comparison.
+            prompt_reviser (PromptReviser, optional): Component for refining ambiguous prompts.
+            error_handler (BaseErrorHandler, optional): Handles code execution failures and LLM retries.
+    """
         self.__logger: Logger = logger_factory(__name__)
         self.__engine_strategy: EngineStrategy = engine_strategy
-        self.__client = InferenceClient(logger_factory, chat_completion)
+        self.__client = client
         self.__result_trace: ResultTrace = result_trace
-        self.__collect_pyre_type_information: bool = collect_pyre_type_information
         self.__expected_solution = expected_solution
-        self.__prompt_reviser = prompt_reviser if prompt_reviser else NoOpPromptReviser()
+        self.__prompt_reviser = prompt_reviser if prompt_reviser else NullPromptReviser()
         self.__enter_revise = False
-        self.__error_handler = error_handler
-        self.__error_handling = error_handler not None
-
+        self.__error_handler = error_handler if error_handler else NullErrorHandler()
 
     async def solve(self) -> None:
         """
@@ -159,7 +153,7 @@ Constraints:
         if not success:
             self.__enter_revise = True
             self.__logger.warning("Retrying prompt revising due to incorrect result.")
-            self.__prompt_reviser.revise(
+            await self.__prompt_reviser.revise(
                 os.linesep.join(self.__engine_strategy.constraints_prompt),
                 self.__result_trace.python_code,
                 err
@@ -229,7 +223,7 @@ Constraints:
                 all_constraints.append(constraints)
 
             constraints = os.linesep.join(all_constraints)
-            if self.__engine_strategy.data_structure_included(contraints):
+            if self.__engine_strategy.data_structure_included(constraints):
                 python_code: str = f"""
 {self.__engine_strategy.python_code_prefix}
 {constraints}
@@ -248,11 +242,19 @@ Constraints:
                 preprocessed: str = await self.__engine_strategy.generate_solver_constraints(
                     python_code
                 )
-                end = perf_counter()
+                end = time.perf_counter()
                 self.__result_trace.libcst_time = end - start
             except ParserSyntaxError:
                 self.__logger.exception("Parser error when reading constraint")
                 self.__result_trace.num_logic_py_syntax_errors += 1
+                return None, True
+
+            except Exception as e :
+                self.__logger.exception(f"Error when reading constraint : {e}")
+                self.__result_trace.num_logic_py_syntax_errors += 1
+                return None, True
+
+            if not preprocessed:
                 return None, True
 
             solver_constraints = preprocessed[0]
@@ -292,8 +294,8 @@ Constraints:
                     self.__result_trace.num_solver_timeouts += 1
                     return None, True
                 except Exception as e :
-                    if self.__error_handling:
-                        self.__error_handler.revise(python_code, e)
+                    retry = await self.__error_handler.revise(python_code, e)
+                    if retry:
                         continue
                     return None, True
 
@@ -303,26 +305,25 @@ Constraints:
             solver_outcome, output = self.__engine_strategy.parse_solver_output(
                 solver_exit_code, (stdout, *preprocessed[1:] ), stderr
             )
+
             match solver_outcome:
                 case SolverOutcome.SUCCESS:
                     return output, False
                 case SolverOutcome.FATAL:
-                    self.__logger.warning(f"Retrying prompt revising due to an Error : \n {stderr}.")
-                    self.prompt_reviser.revise(
+
+                    await self.__prompt_reviser.revise(
                         os.linesep.join(self.__engine_strategy.constraints_prompt),
                         self.__result_trace.python_code,
                         stderr
                     )
-                    return None, True
 
-                    if self.__error_handling :
-                        self.__logger.warning(f"Retrying to find solution due to an Error : \n {stderr}.")
-                        self.__error_handler.revise(python_code, stderr)
+                    retry = await self.__error_handler.revise(python_code, stderr)
+                    if retry:
                         continue
 
                     return None, True
 
-                    case SolverOutcome.RETRY:
+                case SolverOutcome.RETRY:
                     attempts += 1
                     if attempts >= RETRY_COUNT:
                         self.__logger.error(

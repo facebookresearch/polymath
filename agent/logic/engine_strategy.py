@@ -86,7 +86,7 @@ class EngineStrategy(ABC):
         """
         ...
 
-        @abstractmethod
+    @abstractmethod
     def data_structure_included(self, constraints: str) -> bool:
         """
         Checks whether the given constraint code includes the data structure
@@ -98,10 +98,11 @@ class EngineStrategy(ABC):
             bool: True if the data structure is correctly included, False otherwise.
         """
         ...
+
     @abstractmethod
     async def generate_solver_constraints(
             self, code: str
-        ) -> Tuple[str, *tuple[Any, ...]]:
+        ) -> Tuple[str, *Tuple[Any, ...]]:
         """
         All supported solvers are invoked using a CLI interface (e.g. `cbmc`,
         `z3`). This method generates constraints for the implemented solver
@@ -145,7 +146,7 @@ class EngineStrategy(ABC):
 
     @abstractmethod
     def parse_solver_output(
-        self, exit_code: int, stdout: str, stderr: str
+        self, exit_code: int, stdout: Tuple[str, *Tuple[Any, ...]], stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         """
         Interprets the result of the constraint solver subprocess invocation.

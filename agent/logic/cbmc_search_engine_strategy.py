@@ -148,23 +148,20 @@ class CBMCSearchEngineStrategy(EngineStrategy):
         return _SYSTEM_PROMPT.format(self.__output_format)
 
     def data_structure_included(self, constraints: str) -> bool :
-        return re.match(r"\s*class",constraints) not None
+        return re.match(r"\s*class",constraints) is not None
 
     async def generate_solver_constraints(
-            self, python_code: str, collect_pyre_type_information: bool,
-    ) -> Tuple[str, *tuple[Any, ...]]:
+            self, python_code: str
+    ) -> Tuple[str, *Tuple[Any, ...]]:
         module: Module
         metadata: Optional[MetadataWrapper]
-        if collect_pyre_type_information:
-            metadata = await ModuleWithTypeInfoFactory.create_module(
-                python_code
-            )
-            module = metadata.module
-        else:
-            module = parse_module(python_code)
-            metadata = None
+        module = parse_module(python_code)
+        metadata = None
 
-        return (LogicPyCHarnessGenerator.generate(module),)
+        code = LogicPyCHarnessGenerator.generate(module)
+        if not code:
+            return None
+        return (code,)
 
     def generate_solver_invocation_command(self, solver_input_file: str) -> list[str]:
         return [
@@ -181,7 +178,7 @@ class CBMCSearchEngineStrategy(EngineStrategy):
         )
 
     def parse_solver_output(
-        self, exit_code: int, stdout: str, stderr: str
+        self, exit_code: int, stdout: Tuple[str, *Tuple[Any, ...]], stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         if exit_code == 10:
             cbmc_output = stdout[0]

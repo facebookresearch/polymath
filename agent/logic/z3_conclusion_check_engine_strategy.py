@@ -259,8 +259,14 @@ class Z3ConclusionCheckEngineStrategy(EngineStrategy):
         )
 
     async def generate_solver_constraints(
-        self, module: Module, metadata: Optional[MetadataWrapper]
-    ) -> str:
+        self,code: str
+    ) -> Tuple[str, *Tuple[Any, ...]]:
+        module: Module
+        metadata: Optional[MetadataWrapper]
+        metadata = await ModuleWithTypeInfoFactory.create_module(
+                        python_code
+        )
+        module = metadata.module
         if metadata is None:
             raise ValueError("SMT back-end needs type information enabled")
 
@@ -268,7 +274,7 @@ class Z3ConclusionCheckEngineStrategy(EngineStrategy):
         wrapper: MetadataWrapper = await ModuleWithTypeInfoFactory.create_module(
             preprocessed.code
         )
-        return LogicPySMTHarnessGenerator.generate(wrapper)
+        return (LogicPySMTHarnessGenerator.generate(wrapper),)
 
     def generate_solver_invocation_command(self, solver_input_file: str) -> list[str]:
         return ["z3", solver_input_file]
@@ -277,11 +283,11 @@ class Z3ConclusionCheckEngineStrategy(EngineStrategy):
         return None
 
     def parse_solver_output(
-        self, exit_code: int, stdout: str, stderr: str
+        self, exit_code: int, stdout: Tuple[str, *Tuple[Any, ...]], stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         if exit_code == 0:
             output: str
-            match stdout:
+            match stdout[0]:
                 case z3_output_patterns._FALSE:
                     output = "False"
                 case z3_output_patterns._RETRY:

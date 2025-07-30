@@ -3,7 +3,7 @@
 from typing import Dict, Any, Optional, Tuple
 import os
 from json import loads
-from agent.logic.solution_comparator import SolutionComparator
+from agent.logic.analysis.solution_comparator import SolutionComparator
 
 class ZebraSolutionComparator(SolutionComparator):
     """
@@ -14,7 +14,7 @@ class ZebraSolutionComparator(SolutionComparator):
         - Iterates over each house and attribute to verify correctness.
         - Supports logging mismatches with context-specific error messages.
     """
-    def compare_zebra_solutions(
+    def compare(
         self,
         solution: Dict[str, Any],
         outcome: Optional[str],

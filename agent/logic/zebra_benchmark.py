@@ -30,6 +30,7 @@ from dotenv import load_dotenv
 from inference.chat_completion import Message, Role
 from inference.chat_completion import ChatCompletion
 from inference.chat_completion_factory import create_chat_completion
+from inference.client import InferenceClient
 from judge.result_trace import ResultTrace
 from logger.logger_factory import LoggerFactory
 from pyarrow import Table
@@ -184,20 +185,20 @@ class ZebraBenchmark:
         engine_strategy : EngineStrategy = self.__solver_factory.create(
             self.__logger_factory, puzzle, output_format
         )
-        error_handler = ErrorHandler(engine_strategy, model)
+        client = InferenceClient(self.__logger_factory, model)
+        error_handler = ErrorHandler(engine_strategy, client, self.__logger_factory)
         solver = (
                 ModelOnlySolver(
                     self.__logger_factory,
-                    model,
+                    client,
                     result_trace,
                     puzzle,
                     output_format,
                 )
                 if self.__model_only
                 else LogicAgent(
-                        self.__logger_factory, model, engine_strategy, result_trace,
+                        self.__logger_factory, client, engine_strategy, result_trace,
                         expected_solution = expected_solution,
-                        error_handler = error_handler,
                 )
         )
         await solver.solve()
@@ -484,14 +485,16 @@ async def main():
          "/srv/data/Llama-3.3-70B-Instruct",
        ),
     ]
-    Solver_factory: EngineStrategyFactory = PrologStrategyFactory()
+    # Solver_factory: EngineStrategyFactory = PrologStrategyFactory()
+    Solver_factory: EngineStrategyFactory = CbmcStrategyFactory()
+
     for model in models:
         async with ZebraBenchmark(
                 model[0],
                 model[1],
                 model[2],
                 solver_factory = Solver_factory,
-                zebra_input_dataset_path = path.join(module_path,"dataset/test-00000-of-00001.parquet")
+                zebra_input_dataset_path = path.join(module_path,"dataset/test-00000-of-00001-small.parquet")
         ) as benchmark:
             await benchmark.run()
 

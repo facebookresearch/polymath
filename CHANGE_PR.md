@@ -14,6 +14,19 @@
   - Allows injecting different `EngineStrategy` implementations dynamically.
   - Replaces the hardcoded use of `CBMCEngineStrategy` in the main logic.
 
+- **Moved libCST parsing and type analysis into the engine layer**
+  - The engine is now responsible for preprocessing and constraint extraction.
+  - Removed `collect_pyre_type_information` flag from `LogicAgent`
+  - Enables supporting backends that do not rely on libCST, such as Prolog.
+
+---
+
+### LogicPy Constraint Generator Improvements
+
+- **Improved variable naming hygiene in `LogicPyCConstraintGenerator`
+  - Introduced a forbidden_nouns list with C reserved keywords: ["long", "short", "double"]
+  - When such names are used, a trailing underscore is appended.
+
 ---
 
 ### Solution Comparator System
@@ -27,6 +40,9 @@
     - Success or failure
     - Number of mismatches
     - Detailed error messages when differences are found
+
+- **Added `TestZebraSolutionComparator`
+  - Unit tests validating the correctness of the Zebra solution comparison logic.
 
 ---
 
@@ -43,7 +59,7 @@
   - Temperature is adjusted during iterations for better exploration.
   - Designed to be passed directly to the `LogicAgent` pipeline.
 
-- **Implemented `NoOpPromptReviser`**
+- **Implemented `NullPromptReviser`**
   - A minimal implementation of `PromptReviser` that performs no revisions.
   - Used as a default when prompt revision is not required.
   - Prevents the need for None checks or conditional logic throughout the agent.
@@ -53,11 +69,18 @@
 
 ### Error Handling System
 
+- **Created an abstract base class `BaseErrorHandler`
+  - Defines the interface for LLM-compatible error summarization and handling.
+
 - **Added an `ErrorHandler` class**
+  - Inherits from BaseErrorHandler
   - Takes raw solver errors (e.g., from CBMC) and formats them into natural language.
   - Output is designed to be interpretable by the reviser LLM.
-  - Helps guide the prompt adaptation process more effectively.
+  - Helps the reviser LLM understand the source of failure.
 
+- **Implemented `NullErrorHandler`
+  - Implements `BaseErrorHandler`
+  - Performs no operation, Prevents conditional logic by safely acting as a placeholder.
 ---
 
 ### Multi-Backend ChatCompletion Interface
@@ -77,3 +100,6 @@
   - Uses 4-bit quantization (`BitsAndBytesConfig`) with `AutoModelForCausalLM`.
   - Loads model using `pipeline("text-generation")`.
   - Compatible with GPU acceleration and memory-efficient quantized inference.
+
+- **Implemented OllamaChatCompletion
+  - Local inference backend using Ollama runtime.

@@ -1,11 +1,13 @@
 from agent.logic.prompt_reviser import PromptReviser
 from agent.logic.engine_strategy import EngineStrategy
 
+from logging import Logger
 from inference.client import InferenceClient
 from inference.chat_compeletion import Message, Role
 
 from agent.logic.analysis.solution_comparator import SolutionComparator
 from agent.logic.analysis.zebra_comparator import ZebraComparator
+from typing import Callable
 
 class AdaptivePromptReviser(PromptReviser):
     """
@@ -28,6 +30,7 @@ class AdaptivePromptReviser(PromptReviser):
         self,
         engine_strategy: EngineStrategy,
         client: InferenceClient,
+        logger_factory: Callable[[str], Logger],
         comparator: SolutionComparator,
         max_num_revise: int = 3,
         max_temperature: float = 0.9,
@@ -35,6 +38,7 @@ class AdaptivePromptReviser(PromptReviser):
     ):
         self.engine_strategy = engine_strategy
         self.client = client
+        self.logger: Logger = logger_factory(__name__)
         self.comparator = comparator
         self.max_num_revise = max_num_revise
         self.max_temperature = max_temperature
@@ -43,15 +47,16 @@ class AdaptivePromptReviser(PromptReviser):
         self.curr_temperature = 0.0
 
     async def revise(self, constraints_prompt: str, code: str, error_details: str):
+        self.logger.warning(f"Retrying prompt revising due to an Error : \n {error_details}.")
         prompt = self.engine_strategy.get_revise_prompt(constraints_prompt, code, error_details)
         message = Message(Role.USER, prompt)
         _, ai_response = await self.client.create(message)
         self.engine_strategy.set_constraints_prompt(ai_response)
 
-        def compare(self,solution: Dict[str, Any],
+    def compare(self,solution: Dict[str, Any],
             outcome: Optional[str]) -> Tuple[bool, str] :
-            success, _, err = self.comparator.compare(outcome, solution)
-            return success, err
+        success, _, err = self.comparator.compare(outcome, solution)
+        return success, err
 
 
     def on_failure(self) -> bool:
