@@ -4,7 +4,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional, Sequence, Type, Union
+from typing import Optional, Sequence, Union
 
 from agent.symex.collect_unique_ids import (
     CollectUniquelyIdentifiedVars,
@@ -12,7 +12,6 @@ from agent.symex.collect_unique_ids import (
     SupportedUniqueIdTypes,
     UniquePropertyToObjectId,
 )
-from agent.symex.module_with_type_info_factory import ModuleWithTypeInfoFactory
 from agent.symex.scope import ScopeManager
 
 from agent.symex.unique_aliasing import UniqueAliasing

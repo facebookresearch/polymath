@@ -1,7 +1,6 @@
 from typing import Dict, List, Any
 from collections import defaultdict
-import math
-from utils import compare_zebra_solutions, difficulty, find_solution
+from utils import difficulty, find_solution
 from solution_comparator import SolutionComparator
 
 

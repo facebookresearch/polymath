@@ -8,17 +8,14 @@ from asyncio import Lock, run
 from io import StringIO
 from json import dumps, JSONDecodeError, loads
 from logging import Logger
-import os
 from os import path
 from re import compile, fullmatch, Match, Pattern
 from types import TracebackType
 from typing import Any, Callable, Optional, Tuple
-import time
 import aiofiles
 
 from agent.logic.agent import LogicAgent
 from agent.logic.engine_strategy_factory import EngineStrategyFactory
-from agent.logic.engine_strategy_factory import PrologStrategyFactory
 from agent.logic.engine_strategy_factory import CbmcStrategyFactory
 from agent.logic.engine_strategy import EngineStrategy
 from agent.logic.model_only import ModelOnlySolver
@@ -27,7 +24,7 @@ from aiofiles.threadpool.text import AsyncTextIOWrapper
 from concurrency.async_pool import AsyncPool
 
 from dotenv import load_dotenv
-from inference.chat_completion import Message, Role
+from inference.chat_completion import Message
 from inference.chat_completion import ChatCompletion
 from inference.chat_completion_factory import create_chat_completion
 from inference.client import InferenceClient
@@ -105,7 +102,7 @@ class ZebraBenchmark:
             create_sample_output_converter()
         )
 
-        if zebra_input_dataset_path is not None:
+        if zebra_input_dataset_path:
             self.__zebra_input_dataset_path: str = zebra_input_dataset_path
         else:
             module_path: str = path.dirname(__file__)

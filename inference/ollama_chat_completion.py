@@ -1,8 +1,7 @@
 import asyncio
-import functools
 from logging import Logger
 from types import TracebackType
-from typing import Callable, List, Optional, Tuple, Dict
+from typing import Callable, List, Optional, Tuple
 
 from inference.chat_completion import ChatCompletion, Message
 from inference.finish_reason import FinishReason
@@ -22,7 +21,7 @@ class OllamaChatCompletion(ChatCompletion):
         self.__max_gen_tokens = max_gen_tokens
         self.__temperature = temperature
 
-    async def __aenter__(self) -> "OLlamaChatCompletion":
+    async def __aenter__(self) -> "OllamaChatCompletion":
         return self
 
     async def __aexit__(

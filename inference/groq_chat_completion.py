@@ -5,10 +5,8 @@ from typing import Callable, Optional, Tuple
 from inference.chat_completion import ChatCompletion, Message
 from inference.finish_reason import FinishReason
 
-from groq import Groq
 import os
 import aiohttp
-import json
 
 class GroqChatCompletion(ChatCompletion):
     """
@@ -69,7 +67,6 @@ class GroqChatCompletion(ChatCompletion):
                 async with session.post(self.__api_url, headers=headers, json=payload) as response:
                     if response.status != 200:
                         self.__logger.error(f"Groq API Error: {response.status}")
-                        print(await response.json())
                         return FinishReason.RETRYABLE_ERROR, None
 
                     data = await response.json()

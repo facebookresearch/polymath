@@ -437,7 +437,7 @@ class LogicPySMTConstraintGenerator(CSTVisitor):
 
         node.target.visit(self)
         self.__append_line(f"{_INDEX_SUFFIX} Int))", False)
-        self.__append_line(f"(let")
+        self.__append_line("(let")
         self.__indent.indent()
         self.__append("((")
         node.target.visit(self)
@@ -610,12 +610,12 @@ class LogicPySMTConstraintGenerator(CSTVisitor):
         attribute_name: str = original_attribute_name
         potential_bases: deque[str] = deque()
         self.__add_ancestors(potential_bases, this_type)
-        while not attribute_name in self.__smt_attributes and potential_bases:
+        while attribute_name not in self.__smt_attributes and potential_bases:
             ancestor: str = potential_bases.popleft()
             self.__add_ancestors(potential_bases, ancestor)
             attribute_name = f"__attribute_{ancestor}_{func_name}"
 
-        if not attribute_name in self.__smt_attributes:
+        if attribute_name not in self.__smt_attributes:
             attribute_name = original_attribute_name
 
         args_without_universe: list[BaseExpression] = [
@@ -628,9 +628,9 @@ class LogicPySMTConstraintGenerator(CSTVisitor):
         else:
             self.__append(f"({attribute_name}", False)
             for arg in args_without_universe:
-                self.__append(f" ", False)
+                self.__append(" ", False)
                 arg.visit(self)
-            self.__append(f")", False)
+            self.__append(")", False)
 
     def __add_ancestors(
         self, potential_bases: deque[str], python_class_name: Optional[str]

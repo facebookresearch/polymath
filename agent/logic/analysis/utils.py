@@ -1,8 +1,6 @@
-from typing import Dict, Tuple, Optional, List, Any
+from typing import Dict, Optional, List, Any
 import math
 import json
-from json import loads
-import os
 
 def difficulty(size: str) -> str:
     op = size[1]

@@ -7,16 +7,15 @@
 import os
 from logging import Logger
 from re import compile, DOTALL, Match, Pattern
-from tempfile import gettempdir
 from typing import Callable, Optional, Tuple
 import time
+import json
 
 from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
 from agent.logic.solver import Solver
-from agent.symex.module_with_type_info_factory import ModuleWithTypeInfoFactory
 from aiofiles.tempfile import NamedTemporaryFile
 from concurrency.subprocess import Subprocess
-from inference.chat_completion import ChatCompletion, Role
+from inference.chat_completion import Role
 from inference.client import InferenceClient
 
 from judge.result_trace import ResultTrace
@@ -244,10 +243,6 @@ Constraints:
                 )
                 end = time.perf_counter()
                 self.__result_trace.libcst_time = end - start
-            except ParserSyntaxError:
-                self.__logger.exception("Parser error when reading constraint")
-                self.__result_trace.num_logic_py_syntax_errors += 1
-                return None, True
 
             except Exception as e :
                 self.__logger.exception(f"Error when reading constraint : {e}")

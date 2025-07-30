@@ -12,7 +12,7 @@ import re
 
 from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
 from agent.logic.logic_py_c_harness_generator import LogicPyCHarnessGenerator
-from libcst import MetadataWrapper, Module, parse_module, ParserSyntaxError
+from libcst import Module, parse_module
 
 # Instructs the model to generate the solution constraints.
 _CONSTRAINTS_MESSAGE: str = """Now you must generate a validation function which contains constraints that assert that a given solution is correct. Your solver tool will then find a solution which satisfies your constraints and thus solve the puzzle. Please adhere to the following rules:
@@ -153,10 +153,9 @@ class CBMCSearchEngineStrategy(EngineStrategy):
     async def generate_solver_constraints(
             self, python_code: str
     ) -> Tuple[str, *Tuple[Any, ...]]:
+
         module: Module
-        metadata: Optional[MetadataWrapper]
         module = parse_module(python_code)
-        metadata = None
 
         code = LogicPyCHarnessGenerator.generate(module)
         if not code:
@@ -236,7 +235,7 @@ class CBMCSearchEngineStrategy(EngineStrategy):
                     continue
 
                 if not is_first:
-                    string_builder.write(f",\n")
+                    string_builder.write(",\n")
                 is_first = False
 
                 string_builder.write(f"{next_indent}{name}: ")
@@ -245,11 +244,11 @@ class CBMCSearchEngineStrategy(EngineStrategy):
                 )
             string_builder.write(f"\n{indent}}}")
         elif "elements" in cbmc_json_value:
-            string_builder.write(f"[\n")
+            string_builder.write("[\n")
             is_first = True
             for element in cbmc_json_value["elements"]:
                 if not is_first:
-                    string_builder.write(f",\n")
+                    string_builder.write(",\n")
                 is_first = False
 
                 CBMCSearchEngineStrategy.__cbmc_value_to_string(
@@ -276,7 +275,7 @@ class CBMCSearchEngineStrategy(EngineStrategy):
             trace.
         """
         try:
-            cbmc_json_output: Any = loads(stdout)
+            cbmc_json_output: Any = loads(cbmc_output)
             value = CBMCSearchEngineStrategy.__parse_cbmc_solution(cbmc_json_output)
         except:
             value = CBMCSearchEngineStrategy.txt_to_json(cbmc_output)

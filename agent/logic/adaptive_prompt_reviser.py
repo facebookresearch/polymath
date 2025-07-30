@@ -6,8 +6,7 @@ from inference.client import InferenceClient
 from inference.chat_compeletion import Message, Role
 
 from agent.logic.analysis.solution_comparator import SolutionComparator
-from agent.logic.analysis.zebra_comparator import ZebraComparator
-from typing import Callable
+from typing import Callable, Dict, Any, Optional, Tuple
 
 class AdaptivePromptReviser(PromptReviser):
     """

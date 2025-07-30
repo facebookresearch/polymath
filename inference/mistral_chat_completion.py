@@ -1,5 +1,4 @@
 import asyncio
-import functools
 from logging import Logger
 from types import TracebackType
 from typing import Callable, List, Optional, Tuple
@@ -7,7 +6,6 @@ from typing import Callable, List, Optional, Tuple
 from mistral_inference.transformer import Transformer
 from mistral_inference.generate import generate
 from mistral_common.tokens.tokenizers.mistral import MistralTokenizer
-#from mistral_common.protocol.instruct.messages import Message as MistralMessage
 from mistral_common.protocol.instruct.messages import UserMessage, AssistantMessage, SystemMessage
 from mistral_common.protocol.instruct.request import ChatCompletionRequest
 

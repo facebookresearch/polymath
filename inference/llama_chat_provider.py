@@ -1,5 +1,4 @@
 import asyncio
-import functools
 from logging import Logger
 from types import TracebackType
 from typing import Callable, List, Optional, Tuple, Dict

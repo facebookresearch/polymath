@@ -6,7 +6,7 @@
 
 from logging import Logger
 from types import SimpleNamespace
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Any
 
 from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
 
@@ -261,12 +261,11 @@ class Z3ConclusionCheckEngineStrategy(EngineStrategy):
     async def generate_solver_constraints(
         self,code: str
     ) -> Tuple[str, *Tuple[Any, ...]]:
-        module: Module
+
         metadata: Optional[MetadataWrapper]
         metadata = await ModuleWithTypeInfoFactory.create_module(
-                        python_code
+                        code
         )
-        module = metadata.module
         if metadata is None:
             raise ValueError("SMT back-end needs type information enabled")
 

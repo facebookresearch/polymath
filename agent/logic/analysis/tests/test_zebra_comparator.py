@@ -1,5 +1,5 @@
 import unittest
-from agent.logic.zebra_comparator import ZebraSolutionComparator
+from agent.logic.analysis.zebra_comparator import ZebraSolutionComparator
 import json
 
 class TestZebraSolutionComparator(unittest.TestCase):
@@ -35,19 +35,19 @@ class TestZebraSolutionComparator(unittest.TestCase):
                 "House 3": {"Color": "Blue", "Nationality": "Japanese"},
             }
         }
-        success, err_count, msg = self.comparator.compare_zebra_solutions(self.solution, json.dumps(outcome))
+        success, err_count, msg = self.comparator.compare(self.solution, json.dumps(outcome))
         self.assertFalse(success)
         self.assertEqual(err_count, 1)
         self.assertIn("Mismatch in House 1", msg)
 
     def test_invalid_json(self):
-        success, err_count, msg = self.comparator.compare_zebra_solutions(self.solution, "not json")
+        success, err_count, msg = self.comparator.compare(self.solution, "not json")
         self.assertFalse(success)
         self.assertEqual(err_count, 0)
         self.assertIn("not valid JSON", msg)
 
     def test_none_outcome(self):
-        success, err_count, msg = self.comparator.compare_zebra_solutions(self.solution, None)
+        success, err_count, msg = self.comparator.compare(self.solution, None)
         self.assertFalse(success)
         self.assertEqual(err_count, 0)
         self.assertIn("outcome is empty or None", msg)
