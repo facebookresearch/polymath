@@ -42,6 +42,8 @@ from training.sample_output_converter_factory import create_sample_output_conver
 from agent.logic.analysis.solution_comparator import SolutionComparator
 from agent.logic.analysis.zebra_comparator import ZebraSolutionComparator
 from agent.logic.error_handler import ErrorHandler
+from agent.logic.adaptive_prompt_reviser import AdaptivePromptReviser
+from agent.logic.prompt_reviser import PromptReviser
 
 # Used to extract the house number from a formatted solution.
 _ZERO_EVAL_HOUSE_NAME_PATTERN: Pattern = compile("House ([\\d]*)")
@@ -184,6 +186,7 @@ class ZebraBenchmark:
         )
         client = InferenceClient(self.__logger_factory, model)
         error_handler = ErrorHandler(engine_strategy, client, self.__logger_factory)
+        prompt_adapter: PromptReviser = AdaptivePromptReviser(engine_strategy, client, self.__logger_factory, self.zebra_comparator, expected_solution)
         solver = (
                 ModelOnlySolver(
                     self.__logger_factory,
@@ -195,7 +198,8 @@ class ZebraBenchmark:
                 if self.__model_only
                 else LogicAgent(
                         self.__logger_factory, client, engine_strategy, result_trace,
-                        expected_solution = expected_solution,
+                        prompt_reviser = prompt_adapter,
+                        error_handler = error_handler,
                 )
         )
         await solver.solve()
@@ -223,8 +227,8 @@ class ZebraBenchmark:
                     "created_at": task["created_at"],
                     "success":success,
                     "nb_err": nb_err,
-                    "better_prompt": engine_strategy.constraints_prompt if result_trace.revise_success else None,
-                    "better_tempertature":solver.__curr_temperature if result_trace.revise_success else None ,
+                    "better_prompt": engine_strategy.constraints_prompt,
+                    "better_tempertature":solver.__curr_temperature,
                     "polymath_metadata": {
                         "num_agent_retries": result_trace.num_agent_retries,
                         "num_logic_py_syntax_errors": result_trace.num_logic_py_syntax_errors,

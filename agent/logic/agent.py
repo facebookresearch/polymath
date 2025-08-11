@@ -58,7 +58,6 @@ class LogicAgent(Solver):
         client: InferenceClient,
         engine_strategy: EngineStrategy,
         result_trace: ResultTrace,
-        expected_solution: str = None,
         prompt_reviser: PromptReviser = None,
         error_handler: BaseErrorHandler =  None
     ) -> None:
@@ -78,9 +77,7 @@ class LogicAgent(Solver):
         self.__engine_strategy: EngineStrategy = engine_strategy
         self.__client = client
         self.__result_trace: ResultTrace = result_trace
-        self.__expected_solution = expected_solution
         self.__prompt_reviser = prompt_reviser if prompt_reviser else NullPromptReviser()
-        self.__enter_revise = False
         self.__error_handler = error_handler if error_handler else NullErrorHandler()
 
     async def solve(self) -> None:
@@ -147,23 +144,12 @@ Constraints:
 
         self.__result_trace.solution = await self.__format_solution(solution)
 
-        success, err = self.__prompt_reviser.compare(self.__expected_solution, self.__result_trace.solution)
+        retry = self.__prompt_reviser.check_and_revise(
+            self.__result_trace.solution,
+            self.__result_trace.python_code
+        )
 
-        if not success:
-            self.__enter_revise = True
-            self.__logger.warning("Retrying prompt revising due to incorrect result.")
-            await self.__prompt_reviser.revise(
-                os.linesep.join(self.__engine_strategy.constraints_prompt),
-                self.__result_trace.python_code,
-                err
-            )
-            return True
-
-        if self.__enter_revise:
-            self.__result_trace.revise_success = True
-            self.__engine_strategy.set_initial_constraints_prompt()
-
-        return False
+        return retry
 
     async def __generate_data_structure(self) -> Optional[str]:
         """

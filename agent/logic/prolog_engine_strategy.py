@@ -188,6 +188,12 @@ Return only the revised prompt, without commentary or explanation.
 """
 
 
+# Sent if the solver was unable to find a solution.
+_UNSAT_MESSAGE: str = (
+    "Your constraints are contradictory and thus the solver could not find a solution. Please review them and try to spot the error, we will go through the step of generating the `def validate(solution: Solution) -> None` function again."
+)
+
+
 
 class PrologEngineStrategy(EngineStrategy):
     """

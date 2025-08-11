@@ -20,6 +20,7 @@ class OllamaChatCompletion(ChatCompletion):
         self.__model_path = "gemma3:4b"
         self.__max_gen_tokens = max_gen_tokens
         self.__temperature = temperature
+        self.__initial_temperature = temperature
 
     async def __aenter__(self) -> "OllamaChatCompletion":
         return self
