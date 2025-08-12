@@ -12,11 +12,11 @@ from os import path
 from re import compile, fullmatch, Match, Pattern
 from types import TracebackType
 from typing import Any, Callable, Optional, Tuple
-
 import aiofiles
 
 from agent.logic.agent import LogicAgent
-from agent.logic.cbmc_search_engine_strategy import CBMCSearchEngineStrategy
+from agent.logic.engine_strategy_factory import EngineStrategyFactory
+from agent.logic.engine_strategy_factory import CbmcStrategyFactory
 from agent.logic.engine_strategy import EngineStrategy
 from agent.logic.model_only import ModelOnlySolver
 from aiofiles.base import AiofilesContextManager
@@ -25,7 +25,9 @@ from concurrency.async_pool import AsyncPool
 
 from dotenv import load_dotenv
 from inference.chat_completion import Message
+from inference.chat_completion import ChatCompletion
 from inference.chat_completion_factory import create_chat_completion
+from inference.client import InferenceClient
 from judge.result_trace import ResultTrace
 from logger.logger_factory import LoggerFactory
 from pyarrow import Table
@@ -37,6 +39,11 @@ from training.lowercase_json import LowerCaseJson
 from training.sample_output_converter import SampleOutputConverter
 from training.sample_output_converter_factory import create_sample_output_converter
 
+from agent.logic.analysis.solution_comparator import SolutionComparator
+from agent.logic.analysis.zebra_comparator import ZebraSolutionComparator
+from agent.logic.error_handler import ErrorHandler
+from agent.logic.adaptive_prompt_reviser import AdaptivePromptReviser
+from agent.logic.prompt_reviser import PromptReviser
 
 # Used to extract the house number from a formatted solution.
 _ZERO_EVAL_HOUSE_NAME_PATTERN: Pattern = compile("House ([\\d]*)")
@@ -52,6 +59,7 @@ class ZebraBenchmark:
         eval_json_file_name: str,
         generator: str,
         model_name: str,
+        solver_factory: EngineStrategyFactory,
         enable_stderr_log: bool = True,
         generate_training_data: bool = False,
         zebra_input_dataset_path: Optional[str] = None,
@@ -80,6 +88,7 @@ class ZebraBenchmark:
         self.__eval_json_file_name = eval_json_file_name
         self.__output_dataset_lock = Lock()
         self.__generator: str = generator
+        self.__solver_factory = solver_factory
         self.__model_name: str = model_name
         self.__model_only: bool = model_only
         self.__enable_stderr_log: bool = enable_stderr_log
@@ -95,19 +104,31 @@ class ZebraBenchmark:
             create_sample_output_converter()
         )
 
-        if zebra_input_dataset_path is not None:
+        if zebra_input_dataset_path:
             self.__zebra_input_dataset_path: str = zebra_input_dataset_path
         else:
             module_path: str = path.dirname(__file__)
             self.__zebra_input_dataset_path: str = path.join(
                 module_path, "../../datasets/grid_mode/test-00000-of-00001.parquet"
             )
+        self.__chat_completion_1: ChatCompletion = None
+        self.__logger_factory = None
+        self.zebra_comparator: SolutionComparator = ZebraSolutionComparator()
 
     async def __aenter__(self) -> "ZebraBenchmark":
         if self.__output_dataset_context:
             self.__output_dataset: AsyncTextIOWrapper = (
                 await self.__output_dataset_context.__aenter__()
             )
+
+        # crée le logger temporaire pour init chat_completion
+        log_stream = StringIO()
+        self.__logger_factory = LoggerFactory(log_stream, self.__enable_stderr_log)
+
+        self.__chat_completion_1 = await create_chat_completion(
+            self.__logger_factory, self.__model_name, gpu_id= 0
+        ).__aenter__()
+
         return self
 
     async def __aexit__(
@@ -119,19 +140,26 @@ class ZebraBenchmark:
         if self.__output_dataset_context:
             await self.__output_dataset_context.__aexit__(exc_type, exc_value, exc_tb)
 
+        if self.__chat_completion_1:
+           await self.__chat_completion_1.__aexit__(exc_type, exc_value, exc_tb)
+
+        if self.__logger_factory:
+            self.__logger_factory.__exit__(exc_type, exc_value, exc_tb)
+
     async def run(self) -> None:
         """
         Runs all Zebra puzzles specified in the input dataset JSON file.
         """
-        pool = AsyncPool(10)
+        pool = AsyncPool(1)
         eval_json: list[dict[str, Any]] = []
         dataset = ParquetFile(self.__zebra_input_dataset_path)
         for row_group_index in range(dataset.num_row_groups):
             table: Table = dataset.read_row_group(row_group_index)
             rows: list[dict[str, Any]] = table.to_pylist()
-            for task in rows:
+            for i, task in enumerate(rows):
+                model = self.__chat_completion_1
                 if self.__filter_dataset(task):
-                    await pool.submit(lambda task=task: self.run_task(eval_json, task))
+                    await pool.submit(lambda task=task: self.run_task(eval_json, task, model))
         await pool.gather()
 
         if not self.__output_dataset_context:
@@ -142,6 +170,7 @@ class ZebraBenchmark:
         self,
         eval_json: list[dict[str, Any]],
         task: dict[str, Any],
+        model: ChatCompletion ,
     ) -> None:
         """
         Executes a single benchmark task and stores the result in `eval_json`.
@@ -151,43 +180,44 @@ class ZebraBenchmark:
         expected_solution: Any = task["solution"]
         output_format: str = ZebraBenchmark.get_format(expected_solution)
 
-        log_stream = StringIO()
         result_trace = ResultTrace(task_id)
-        with LoggerFactory(log_stream, self.__enable_stderr_log) as logger_factory:
-            engine_strategy: EngineStrategy = CBMCSearchEngineStrategy(
-                logger_factory, puzzle, output_format
+        engine_strategy : EngineStrategy = self.__solver_factory.create(
+            self.__logger_factory, puzzle, output_format
+        )
+        client = InferenceClient(self.__logger_factory, model)
+        error_handler = ErrorHandler(engine_strategy, client, self.__logger_factory)
+        prompt_adapter: PromptReviser = AdaptivePromptReviser(engine_strategy, client, self.__logger_factory, self.zebra_comparator, expected_solution)
+        solver = (
+                ModelOnlySolver(
+                    self.__logger_factory,
+                    client,
+                    result_trace,
+                    puzzle,
+                    output_format,
+                )
+                if self.__model_only
+                else LogicAgent(
+                        self.__logger_factory, client, engine_strategy, result_trace,
+                        prompt_reviser = prompt_adapter,
+                        error_handler = error_handler,
+                )
+        )
+        await solver.solve()
+        if self.__output_dataset_context:
+            await self.write_sample(
+                task_id, puzzle, result_trace, expected_solution, self.__logger_factory
             )
-            async with create_chat_completion(
-                logger_factory, self.__model_name
-            ) as chat_completion:
-                solver = (
-                    ModelOnlySolver(
-                        logger_factory,
-                        chat_completion,
-                        result_trace,
-                        puzzle,
-                        output_format,
-                    )
-                    if self.__model_only
-                    else LogicAgent(
-                        logger_factory, chat_completion, engine_strategy, result_trace
-                    )
-                )
-                await solver.solve()
 
-            if self.__output_dataset_context:
-                await self.write_sample(
-                    task_id, puzzle, result_trace, expected_solution, logger_factory
-                )
 
         if not self.__output_dataset_context:
+            success, nb_err, _ = self.zebra_comparator.compare(expected_solution, result_trace.solution,display=True, task_id=task_id )
             eval_json.append(
                 {
                     "session_id": task_id,
                     "chat_history": [message.text for message in result_trace.messages],
                     "model_input": "n/a",
                     "output": [result_trace.solution],
-                    "debug_output": [f"{log_stream.getvalue()}\n{repr(result_trace)}"],
+                    "debug_output": [f"{repr(result_trace)}"],
                     "generator": self.__generator,
                     "configs": {},
                     "dataset": "zebra-grid",
@@ -195,6 +225,10 @@ class ZebraBenchmark:
                     "size": task["size"],
                     "puzzle": puzzle,
                     "created_at": task["created_at"],
+                    "success":success,
+                    "nb_err": nb_err,
+                    "better_prompt": engine_strategy.constraints_prompt,
+                    "better_tempertature":solver.__curr_temperature,
                     "polymath_metadata": {
                         "num_agent_retries": result_trace.num_agent_retries,
                         "num_logic_py_syntax_errors": result_trace.num_logic_py_syntax_errors,
@@ -202,6 +236,14 @@ class ZebraBenchmark:
                         "num_solver_retries": result_trace.num_solver_errors,
                         "num_solver_timeouts": result_trace.num_solver_timeouts,
                         "constraints": result_trace.solver_constraints,
+                        "python-code":result_trace.python_code,
+                    },
+                    "time":{
+                        "data_structure_time" : result_trace.data_structure_time,
+                        "constraints_time" : result_trace.constraints_time,
+                        "solver_time" : result_trace.solver_time,
+                        "libcst_time" : result_trace.libcst_time,
+                        "format_time" : result_trace.format_time,
                     },
                 }
             )
@@ -398,17 +440,62 @@ async def main():
         #     "openai/GPT-o3-mini@reasoning",
         #     "gpt-o3-mini",
         # ),
+        #(
+        #    path.join(base_path, "gpt-4o@reasoning-debug.json"),
+        #    "openai/GPT-4o@reasoning-debug",
+        #    "gpt-4o-evals2",
+        #),
+
+############
+##        ##
+##  groq  ##
+##        ##
+############
+          #(
+          #  path.join(base_path, "deepseek@reasoning.json"),
+          #  "deepseek-r1-distill-llama-70b@reasoning",
+          #  "deepseek-r1-distill-llama-70b",
+          #),
+         #(
+         #   path.join(base_path, "LLaMA-3-70B@reasoning.json"),
+         #   "meta-llama/LLaMA-3-70B@reasoning",
+         #   "llama3-70b-8192",
+         #),
+         #(
+         #    path.join(base_path, "LLaMA-3-8B_23_06@reasoning.json"),
+         #    "meta-llama/LLaMA-3.1-8B@reasoning",
+         #    "llama-3.1-8b-instant",
+         #),
+        #(
+        #  path.join(module_path, "LLaMA-3.3-70B-Versatile-5*6-26@reasoning.json"),
+        # "metadata-llama/LLaMA-3.3-70B-Versatile@reasoning",
+        #   "llama-3.3-70b-versatile",
+        #),
+
+## Mistral Local
+	#(
+        #  path.join(module_path, "Mistral-7B-v0.3-local@Instruct.json"),
+        # "mistral_models/Mistral-7B-v0.3@Instruct",
+        # "/srv/data/mistral_models/7B-Instruct-v0.3",
+        #),
+
+##Llama Local
         (
-            path.join(base_path, "gpt-4o@reasoning-debug.json"),
-            "openai/GPT-4o@reasoning-debug",
-            "gpt-4o-evals2",
-        ),
+          path.join(module_path, "Llama-3.3-70B@Instruct-Review.json"),
+         "Llama_models/Llama-70B-v3.3@Instruct",
+         "/srv/data/Llama-3.3-70B-Instruct",
+       ),
     ]
+    # Solver_factory: EngineStrategyFactory = PrologStrategyFactory()
+    Solver_factory: EngineStrategyFactory = CbmcStrategyFactory()
+
     for model in models:
         async with ZebraBenchmark(
-            model[0],
-            model[1],
-            model[2],
+                model[0],
+                model[1],
+                model[2],
+                solver_factory = Solver_factory,
+                zebra_input_dataset_path = path.join(module_path,"dataset/test-00000-of-00001-small.parquet")
         ) as benchmark:
             await benchmark.run()
 

@@ -143,7 +143,7 @@ class LogicPyCDataStructureGenerator(CSTVisitor):
             for field_initialiser in self.__field_initialisers
         )
         if has_static_field_initialiser_constants:
-            self.c_harness += f"\n"
+            self.c_harness += "\n"
 
         self.c_harness += f"""static void init_{self.__current_class}(struct {self.__current_class} * instance) {{
 """
@@ -168,7 +168,7 @@ class LogicPyCDataStructureGenerator(CSTVisitor):
                 self.c_harness += ";\n"
             elif field_initialiser.c_type.startswith("struct "):
                 self.c_harness += f"    init_{field_initialiser.init_fn_name}(&instance->{field_initialiser.field_name});\n"
-        self.c_harness += f"""}}
+        self.c_harness += """}
 
 """
         self.__is_in_init_fn = False

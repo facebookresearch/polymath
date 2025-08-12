@@ -6,7 +6,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import auto, StrEnum
+from enum import StrEnum
 from types import TracebackType
 from typing import Optional, Tuple
 
@@ -19,13 +19,13 @@ class Role(StrEnum):
     """
 
     # AI or assistant role
-    AI = auto()
+    AI = "assistant"
 
     # System prompt role
-    SYSTEM = auto()
+    SYSTEM = "system"
 
     # User role
-    USER = auto()
+    USER = "user"
 
 
 @dataclass

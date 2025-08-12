@@ -4,7 +4,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from unittest import IsolatedAsyncioTestCase, skip
+from unittest import IsolatedAsyncioTestCase
 
 from agent.logic.logic_py_smt_constraint_generator import LogicPySMTConstraintGenerator
 from agent.logic.logic_py_smt_data_structure_generator import (

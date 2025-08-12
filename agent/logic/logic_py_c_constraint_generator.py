@@ -45,6 +45,7 @@ class LogicPyCConstraintGenerator(m.MatcherDecoratableVisitor):
         self.solution_type: str = "void"
         self.is_inside_validate: bool = False
         self.c_constraints = ""
+        self.forbidden_nouns = ["long", "short", "double"]
 
     def visit_Else(self, node: Else) -> Optional[bool]:
         self.c_constraints += "{\n"
@@ -189,6 +190,8 @@ class LogicPyCConstraintGenerator(m.MatcherDecoratableVisitor):
             )
             if duplicate_count is not None and duplicate_count > 0:
                 value += f"_{duplicate_count}"
+            elif value in self.forbidden_nouns:
+                value += "_"
             elif value == "abs":
                 value = "__CPROVER_abs"
             elif value == "assume":

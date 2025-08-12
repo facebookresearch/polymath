@@ -8,7 +8,7 @@ from json import loads
 from logging import Logger
 from re import compile, DOTALL, IGNORECASE, Match, MULTILINE, Pattern
 from typing import Callable, Optional
-
+import time
 from agent.logic.agent import RETRY_COUNT
 from agent.logic.solver import Solver
 from inference.chat_completion import ChatCompletion, Message, Role
@@ -83,7 +83,10 @@ class ModelOnlySolver(Solver):
 
         assistant_message: str = ""
         for _ in range(RETRY_COUNT):
+            start = time.perf_counter()
             finish_reason, response = await self.__chat_completion.create(messages)
+            end = time.perf_counter()
+            self.__result_trace.format_time = end - start 
             if response is not None:
                 assistant_message += response
                 messages.append(Message(Role.AI, assistant_message))

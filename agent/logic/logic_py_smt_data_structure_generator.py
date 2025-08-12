@@ -17,7 +17,6 @@ from libcst import (
     Name,
     Subscript,
 )
-from libcst.metadata.type_inference_provider import TypeInferenceProvider
 
 
 # The "Universe" class is a singleton, no need to pass its properties an instance parameter.
@@ -100,8 +99,8 @@ class LogicPySMTDataStructureGenerator(CSTVisitor):
                         self.smt_harness += "(this Int) "
                     self.smt_harness += f"(index Int)) {self.__current_type_info.smt_type} ({smt_attribute_name}_backing "
                     if not self.__is_in_universe_class:
-                        self.smt_harness += f"this "
-                    self.smt_harness += f"(ite (and (>= index 0) (< index "
+                        self.smt_harness += "this "
+                    self.smt_harness += "(ite (and (>= index 0) (< index "
                     if self.__is_in_universe_class:
                         self.smt_harness += f"{smt_attribute_name}_size"
                     else:

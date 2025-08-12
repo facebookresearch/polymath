@@ -8,11 +8,11 @@ from io import StringIO
 from json import loads
 from logging import Logger
 from typing import Any, Callable, Optional, Tuple
+import re
 
 from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
 from agent.logic.logic_py_c_harness_generator import LogicPyCHarnessGenerator
-from libcst import MetadataWrapper, Module
-
+from libcst import Module, parse_module
 
 # Instructs the model to generate the solution constraints.
 _CONSTRAINTS_MESSAGE: str = """Now you must generate a validation function which contains constraints that assert that a given solution is correct. Your solver tool will then find a solution which satisfies your constraints and thus solve the puzzle. Please adhere to the following rules:
@@ -25,7 +25,7 @@ _CONSTRAINTS_MESSAGE: str = """Now you must generate a validation function which
 Puzzle condition: "Bob is the person who owns a dog"
 Constraint:
 ```
-bob = nondet(solution.people)
+bob = nondet(solution.Houses)
 assume(bob.name == "Bob")
 assert bob.pet == "dog"
 ```
@@ -33,11 +33,19 @@ assert bob.pet == "dog"
 Puzzle condition: "The coffee drinker is taller than the tea drinker"
 Constraint:
 ```
-coffee_drinker = nondet(solution.people)
+coffee_drinker = nondet(solution.Houses)
 assume(coffee_drinker.drink == "coffee")
-tea_drinker = nondet(solution.people)
+tea_drinker = nondet(solution.Houses)
 assume(tea_drinker.drink == "tea")
 assert coffe_drinker.height > tea_drinker.height
+```
+** Always when working with indices you must work with the function `index` just like this exemple:
+Puzzle condition: "The person who loves fantasy books is in the second house"
+Constraint:
+```
+fantasy_lover = nondet(solution.Houses)
+assume(fantasy_lover.BookGenre == "fantasy")
+assert solution.Houses.index(fantasy_lover) == 1
 ```
 
 The validation function signature must look as follows:
@@ -47,7 +55,7 @@ def validate(solution: Solution) -> None
     # Your constraints belong here...
 ```
 
-Now generate the conditions necessary to check that a solution to the puzzle is correct! Make sure that you consider every condition stated in the puzzle!"
+Now generate the conditions necessary to check that a solution to the puzzle is correct! Make sure that you consider every constraint stated in the puzzle even if you think that we have already did it, they are numbered so make attention not to miss one so always write a comment that containts the number and the content of the constraint!"
 """
 
 # Kicks off the data structure generation by the model.
@@ -66,7 +74,9 @@ _FORMAT_MESSAGE: str = """Your logic solver tool produced the following solution
 Now convert it to the expected output format:
 ```
 {output_format}
-```"""
+```
+just give me the same output format without any changes and not a python code and the result needs to be in between ``` ```
+"""
 
 # Instructs the model on how to generate a solution data structure.
 _SYSTEM_PROMPT: str = """You are an expert puzzle solving agent with access to a propositional logic solver tool that has a convenient interface optimised for you. Your boss has given you a logic puzzle that he thinks can be mapped to your logic solver tool. You must solve this puzzle in two steps:
@@ -79,20 +89,21 @@ I will walk you through these steps one by one. Do not attempt to solve the puzz
 
 Your solver tool allows you to specify the output solution type as Python classes, with a few additional features:
 
-* Just like in SQL, each field can be marked as unique, meaning no two instances of the class can have the same value, e.g.: `id: Unique[int]`
-* Each field can have a value constraint assigned to it, such that only these values are allowed, e.g.: `id: Domain[int, range(1, 11)]` allows id values between 1 (inclusive) and 11 (exclusive), or `name: Domain[str, \"John\", \"Jane\", \"Peter\"]` allows only the strings \"John\", \"Jane\", or \"Peter\". 
+* Just like in SQL, each field can be marked as unique, meaning no two instances of the class can have the same value, e.g.: `Id: Unique[int]`
+* Each field can have a value constraint assigned to it, such that only these values are allowed, e.g.: `Id: Domain[int, range(1, 11)]` allows id values between 1 (inclusive) and 11 (exclusive), or `Name: Domain[str, \"John\", \"Jane\", \"Peter\"]` allows only the strings \"John\", \"Jane\", or \"Peter\".
 * The `list` type allows for a second type argument specifying the size, e.g.: `list[int, 10]`.
 
 Here is an example that uses these features in combination:
 ```
-class Row:
-    id: Unique[Domain[int, range(1, 11)]]
+class House:
     name: Unique[Domain[str, \"John\", \"Jane\", \"Peter\"]]
     music: Unique[Domain[str, \"Jazz\", \"Rock\", \"Pop\"]]
 
-class Table:
-    rows: list[Row, 10]
+class Solution:
+    houses: list[House, 3]
 ```
+You need to always pursue this example, do just two classes one that contains all the attributs ( in this case it is House ) where all the atributs need to be in lowercase and another one that determines the number of data structures that we need ( in this case it is Solution ).
+Do not add an attribute 'HouseNumber' to track the indices, you will be provided in the next prompt an how to manage them.
 
 Always constrain data types according to all the information you can identify in the puzzle text. This is critical for solving the puzzle.
 
@@ -101,7 +112,79 @@ In order to automatically validate the puzzle solution, your data structure will
 {}
 ```
 
-Now specify the type of a valid solution using this syntax."""
+Now specify the type of a valid solution using this syntax and make sur to always put the code in ``` ```
+"""
+
+_ERROR_PROMPT = r"""
+You are helping a language model (the "main model") improve its code generation by analyzing errors in its output.
+
+You will be given:
+- A piece of code generated by the main model.
+- An error message or incorrect output resulting from running that code.
+
+Your task is to write a clear and concise prompt **to send to the main model**, informing it that:
+1. The code it produced contains an error.
+2. What the error is, in plain terms.
+3. A brief suggestion on how it could approach resolving the issue in a future attempt.
+
+⚠️ Do not attempt to fix the code yourself. Do not provide corrected code.
+
+Instead, your output should be a short instructional message **addressed to the main model**, helping it improve its next generation.
+
+Here is the generated code:
+---
+{generated_code}
+---
+
+Here is the error or incorrect behavior:
+---
+{error_message}
+---
+
+Now write a message to the main model that:
+- States there is an error in the code.
+- Explains the nature of the error.
+- Suggests how to fix or avoid it in future generations.
+"""
+
+_REVISE_PROMPT = r"""
+You have previously been asked to convert a logical puzzle into a formal specification using a domain-specific language (DSL). The generated DSL code was incorrect or incomplete, leading to an error or a wrong solution.
+
+Your task is to revise the original natural language prompt so that, if given again to a large language model, it would generate a correct and more robust DSL specification that avoids the observed issues.
+
+You will be given:
+- The original prompt that described the puzzle.
+- The DSL code that was generated.
+- The output from the solver (either an error message or an incorrect result).
+
+**Your goal is to:**
+- Identify what aspects of the original prompt may have led to the incorrect or ambiguous interpretation.
+- Modify only those parts of the original prompt that contributed to the failure.
+
+This is not about fixing the DSL code directly, but about **improving the natural language prompt** so that it can lead to better DSL code generation on the next attempt — even for complex puzzles.
+
+Think of this as training a language model to generalize better across similar logical tasks, not just to fix one-off syntax errors.
+
+Here is the original prompt that was used:
+---
+{original_prompt}
+---
+
+Here is the DSL code that was generated:
+---
+{generated_dsl_code}
+---
+
+Here is the Error returned by the solver:
+---
+{solver_output}
+---
+
+Now revise the original prompt **only where needed** to resolve the misunderstanding or error, and return a clean, improved version of the prompt that is ready to be used in a new LLM call. Be minimal, precise, and instructive.
+
+Return only the revised prompt, without commentary or explanation.
+
+"""
 
 # Sent if the solver was unable to find a solution.
 _UNSAT_MESSAGE: str = (
@@ -135,33 +218,50 @@ class CBMCSearchEngineStrategy(EngineStrategy):
     def data_structure_prompt(self) -> str:
         return _SYSTEM_PROMPT.format(self.__output_format)
 
+    def get_revise_prompt(self, prompt: str, generated_dsl: str, output: str) -> str:
+        return _REVISE_PROMPT.format(
+            original_prompt=prompt, generated_dsl_code = generated_dsl,solver_output=output
+        )
+
+    def get_error_prompt(self, generated_dsl: str, error: str) -> str:
+        return _ERROR_PROMPT.format(generated_code=generated_dsl, error_message=error)
+
+    def data_structure_included(self, constraints: str) -> bool :
+        return re.match(r"\s*class",constraints) is not None
+
     async def generate_solver_constraints(
-        self, module: Module, metadata: Optional[MetadataWrapper]
-    ) -> str:
-        return LogicPyCHarnessGenerator.generate(module)
+            self, python_code: str
+    ) -> Tuple[str, *Tuple[Any, ...]]:
+
+        module: Module
+        module = parse_module(python_code)
+
+        code = LogicPyCHarnessGenerator.generate(module)
+        if not code:
+            return None
+        return (code,)
 
     def generate_solver_invocation_command(self, solver_input_file: str) -> list[str]:
         return [
             "cbmc",
             "-D__CPROVER",
             "--no-standard-checks",
-            "--json-ui",
+            #"--json-ui",
             "--trace",
             solver_input_file,
         ]
-
     def get_format_prompt(self, solution: str) -> Optional[str]:
         return _FORMAT_MESSAGE.format(
             solution=solution, output_format=self.__output_format
         )
 
     def parse_solver_output(
-        self, exit_code: int, stdout: str, stderr: str
+        self, exit_code: int, stdout: Tuple[str, *Tuple[Any, ...]], stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         if exit_code == 10:
-            cbmc_json_output: Any = loads(stdout)
+            cbmc_output = stdout[0]
             parsed_output: str = CBMCSearchEngineStrategy.__parse_cbmc_solution(
-                cbmc_json_output
+                cbmc_output
             )
             return SolverOutcome.SUCCESS, parsed_output
 
@@ -214,7 +314,7 @@ class CBMCSearchEngineStrategy(EngineStrategy):
                     continue
 
                 if not is_first:
-                    string_builder.write(f",\n")
+                    string_builder.write(",\n")
                 is_first = False
 
                 string_builder.write(f"{next_indent}{name}: ")
@@ -223,11 +323,11 @@ class CBMCSearchEngineStrategy(EngineStrategy):
                 )
             string_builder.write(f"\n{indent}}}")
         elif "elements" in cbmc_json_value:
-            string_builder.write(f"[\n")
+            string_builder.write("[\n")
             is_first = True
             for element in cbmc_json_value["elements"]:
                 if not is_first:
-                    string_builder.write(f",\n")
+                    string_builder.write(",\n")
                 is_first = False
 
                 CBMCSearchEngineStrategy.__cbmc_value_to_string(
@@ -253,6 +353,17 @@ class CBMCSearchEngineStrategy(EngineStrategy):
             Python-ish expression equivalent to solution output struct in CBMC
             trace.
         """
+        try:
+            cbmc_json_output: Any = loads(cbmc_output)
+            value = CBMCSearchEngineStrategy.__parse_cbmc_solution(cbmc_json_output)
+        except:
+            value = CBMCSearchEngineStrategy.txt_to_json(cbmc_output)
+        string_builder = StringIO()
+        CBMCSearchEngineStrategy.__cbmc_value_to_string(string_builder, value, "")
+        return string_builder.getvalue()
+
+    @staticmethod
+    def __parse_cbmc_json(cbmc_output: Any) -> Any :
         output_step: Any = [
             step
             for message in cbmc_output
@@ -263,7 +374,53 @@ class CBMCSearchEngineStrategy(EngineStrategy):
             if step["stepType"] == "output"
         ][0]
         value: Any = output_step["values"][0]
+        return value
 
-        string_builder = StringIO()
-        CBMCSearchEngineStrategy.__cbmc_value_to_string(string_builder, value, "")
-        return string_builder.getvalue()
+    @staticmethod
+    def txt_to_json(cbmc_output: str) -> Any:
+        # Étape 1 : identifier le nom de la structure principale (.Houses, .Cars, etc.)
+        main_match = re.search(r'OUTPUT solution:\s*\{\s*\.(\w+)\s*=\s*\{((?:\s*\{[^{}]*\},?)+)\s*\}\s*\}',cbmc_output)
+
+        main_key = main_match.group(1)
+        entries_raw = main_match.group(2)
+
+        # Étape 2 : extraire chaque bloc { .X="...", .Y="...", ... }
+        blocks = re.findall(r'\{(.*?)\}', entries_raw, re.DOTALL)
+
+        # Étape 3 : analyser dynamiquement les attributs de chaque bloc
+        elements = []
+
+        for idx, block in enumerate(blocks):
+            # Trouver tous les attributs sous la forme .Nom="valeur"
+            fields = re.findall(r'\.(\w+)\s*=\s*"([^"]*)"', block)
+            members = [
+            {
+                "name": key,
+                "value": {
+                    "data": val,
+                    "type": "const char *"
+                }
+            }
+            for key, val in fields ]
+            elements.append({
+                "index": idx,
+                "value": {
+                    "name": "struct",
+                    "members": members
+                }
+            })
+
+        # Étape 4 : construire le JSON final
+        json_result = {
+            "name": "struct",
+            "members": [
+            {
+                "name": main_key,
+                "value": {
+                    "name": "array",
+                    "elements": elements
+                    }
+                }
+            ]
+        }
+        return json_result

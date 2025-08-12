@@ -7,21 +7,22 @@
 import os
 from logging import Logger
 from re import compile, DOTALL, Match, Pattern
-from tempfile import gettempdir
 from typing import Callable, Optional, Tuple
+import time
+import json
 
 from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
 from agent.logic.solver import Solver
-from agent.symex.module_with_type_info_factory import ModuleWithTypeInfoFactory
 from aiofiles.tempfile import NamedTemporaryFile
 from concurrency.subprocess import Subprocess
-from inference.chat_completion import ChatCompletion, Role
+from inference.chat_completion import Role
 from inference.client import InferenceClient
 
 from judge.result_trace import ResultTrace
-
-from libcst import MetadataWrapper, Module, parse_module, ParserSyntaxError
-
+from agent.logic.prompt_reviser import PromptReviser
+from agent.logic.null_prompt_reviser import NullPromptReviser
+from agent.logic.base_error_handler import BaseErrorHandler
+from agent.logic.null_error_handler import NullErrorHandler
 
 # Sent if an expected code snippet was not found.
 NO_CODE_FOUND_MESSAGE: str = """I could not find the requested output code snippet in your last message. Please make sure you mark it as follows:
@@ -38,11 +39,10 @@ CODE_EXTRACTION_PATTERN: Pattern = compile(r".*```[^\n]*\n+(.*)```.*", DOTALL)
 CODE_MARKER_PATTERN: Pattern = compile(r"```[^\n]*")
 
 # Number of times we retry an operation, e.g. extracting code from a response.
-RETRY_COUNT: int = 5
+RETRY_COUNT: int = 0
 
 # Constraints taking longer to solve than this are likely incorrect
 _SOLVER_TIMEOUT: float = 15
-
 
 class LogicAgent(Solver):
     """
@@ -55,35 +55,34 @@ class LogicAgent(Solver):
     def __init__(
         self,
         logger_factory: Callable[[str], Logger],
-        chat_completion: ChatCompletion,
+        client: InferenceClient,
         engine_strategy: EngineStrategy,
         result_trace: ResultTrace,
-        collect_pyre_type_information: bool = False,
+        prompt_reviser: PromptReviser = None,
+        error_handler: BaseErrorHandler =  None
     ) -> None:
         """
-        Initialises inference client with default settings and the provided
-        model name.
+        Initializes the LogicAgent with its required components.
 
         Args:
-            logger_factory (Callable[[str], Logger]): Logging configuration to
-            use.
-            model_name (str): Name of model to use in inference client.
-            engine_strategy (EngineStrategy): Agent configuration (e.g. CBMC
-            search or SMT conclusion check).
-            result_trace (ResultTrace): Sink for debug and result output data.
-            collect_pyre_type_information (bool): Whether libCST modules should
-            be parsed with type information. This incurs a performance overhead,
-            but is necessary for the Z3 back-end.
-        """
+            logger_factory (Callable[[str], Logger]): Factory to create context-aware loggers.
+            client (InferenceClient): Inference client to communicate with the language model.
+            engine_strategy (EngineStrategy): Defines how prompts and verification logic are structured.
+            result_trace (ResultTrace): Sink for collecting debug information and results.
+            expected_solution (str, optional): Reference solution for evaluation or comparison.
+            prompt_reviser (PromptReviser, optional): Component for refining ambiguous prompts.
+            error_handler (BaseErrorHandler, optional): Handles code execution failures and LLM retries.
+    """
         self.__logger: Logger = logger_factory(__name__)
         self.__engine_strategy: EngineStrategy = engine_strategy
-        self.__client = InferenceClient(logger_factory, chat_completion)
+        self.__client = client
         self.__result_trace: ResultTrace = result_trace
-        self.__collect_pyre_type_information: bool = collect_pyre_type_information
+        self.__prompt_reviser = prompt_reviser if prompt_reviser else NullPromptReviser()
+        self.__error_handler = error_handler if error_handler else NullErrorHandler()
 
     async def solve(self) -> None:
         """
-        Solves the task in the configured engine strategy. This is actually just
+        Solves thetask in the configured engine strategy. This is actually just
         a retry wrapper around `__solve`, where retries are mostly triggered by
         Python or solver syntax errors. In these cases, we trigger a trajectory
         from scratch, to avoid repeating the same sequences.
@@ -106,15 +105,22 @@ Constraints:
                 attempt_failed = True
 
             self.__result_trace.messages.extend(self.__client.conversation)
+
             if not attempt_failed:
                 break
 
-            self.__client.conversation.clear()
+            continue_retrying = self.__prompt_reviser.on_failure()
+            self.__retry_with_revised_prompt = False
+
+
             attempt += 1
-            if attempt >= RETRY_COUNT:
+            if not continue_retrying or attempt >= RETRY_COUNT:
                 break
+
             self.__logger.warning("Retrying solution finding due to recoverable error.")
             self.__result_trace.num_agent_retries += 1
+
+        self.__prompt_reviser.reset()
 
     async def __solve(self) -> bool:
         """
@@ -136,8 +142,14 @@ Constraints:
         if not solution:
             return retry_if_failed
 
-        await self.__format_solution(solution)
-        return False
+        self.__result_trace.solution = await self.__format_solution(solution)
+
+        retry = self.__prompt_reviser.check_and_revise(
+            self.__result_trace.solution,
+            self.__result_trace.python_code
+        )
+
+        return retry
 
     async def __generate_data_structure(self) -> Optional[str]:
         """
@@ -151,9 +163,12 @@ Constraints:
         self.__client.add_message(
             self.__engine_strategy.data_structure_prompt, Role.USER
         )
+        start = time.perf_counter()
         data_structure: Optional[str] = await self.__receive_code_response(
             "data structure"
         )
+        end = time.perf_counter()
+        self.__result_trace.data_structure_time = end - start
         if data_structure:
             self.__result_trace.python_data_structure = data_structure
             return data_structure
@@ -180,90 +195,115 @@ Constraints:
             all_constraints: list[str] = []
             for constraints_prompt in self.__engine_strategy.constraints_prompt:
                 self.__client.add_message(constraints_prompt, Role.USER)
+                start = time.perf_counter()
                 constraints: Optional[str] = await self.__receive_code_response(
                     "validation function"
                 )
+                end = time.perf_counter()
+                self.__result_trace.constraints_time = end - start
                 if constraints is None:
                     self.__logger.error("Failed to define solution constraints.")
                     self.__result_trace.python_code = data_structure
                     return None, False
                 all_constraints.append(constraints)
 
-            python_code: str = f"""
+            constraints = os.linesep.join(all_constraints)
+            if self.__engine_strategy.data_structure_included(constraints):
+                python_code: str = f"""
+{self.__engine_strategy.python_code_prefix}
+{constraints}
+"""
+            else :
+                python_code: str = f"""
 {self.__engine_strategy.python_code_prefix}
 {data_structure}
-{os.linesep.join(all_constraints)}
+{constraints}
 """
+
             self.__result_trace.python_code = python_code
 
-            module: Module
-            metadata: Optional[MetadataWrapper]
             try:
-                if self.__collect_pyre_type_information:
-                    metadata = await ModuleWithTypeInfoFactory.create_module(
-                        python_code
-                    )
-                    module = metadata.module
-                else:
-                    module = parse_module(python_code)
-                    metadata = None
-            except ParserSyntaxError:
-                self.__logger.exception("Parser error when reading constraint")
+                start = time.perf_counter()
+                preprocessed: str = await self.__engine_strategy.generate_solver_constraints(
+                    python_code
+                )
+                end = time.perf_counter()
+                self.__result_trace.libcst_time = end - start
+
+            except Exception as e :
+                self.__logger.exception(f"Error when reading constraint : {e}")
                 self.__result_trace.num_logic_py_syntax_errors += 1
                 return None, True
 
-            solver_constraints: str = (
-                await self.__engine_strategy.generate_solver_constraints(
-                    module, metadata
-                )
-            )
+            if not preprocessed:
+                return None, True
+
+            solver_constraints = preprocessed[0]
+
             self.__result_trace.solver_constraints = solver_constraints
 
-            solver_input_file_suffix: str = (
-                self.__engine_strategy.solver_input_file_suffix
-            )
+            solver_input_file_suffix: str = self.__engine_strategy.solver_input_file_suffix
+
             solver_exit_code: int
             stdout: str
             stderr: str
             async with NamedTemporaryFile(
-                mode="w", suffix=solver_input_file_suffix, delete_on_close=False
+                mode="w", suffix=solver_input_file_suffix , delete_on_close=False
             ) as file:
                 await file.write(solver_constraints)
                 await file.close()
-
                 solver_input_file: str = str(file.name)
                 try:
+                    start = time.perf_counter()
                     solver_exit_code, stdout, stderr = await Subprocess.run(
                         *self.__engine_strategy.generate_solver_invocation_command(
                             solver_input_file
                         ),
                         timeout_in_s=_SOLVER_TIMEOUT,
                     )
+                    end = time.perf_counter()
+                    self.__result_trace.solver_time = end - start
                 except TimeoutError:
                     self.__logger.exception(
                         f"""Solver timeout.
 Python Code:
 {self.__result_trace.python_code}
-
 Constraints:
 {self.__result_trace.solver_constraints}
-"""
+                        """
                     )
                     self.__result_trace.num_solver_timeouts += 1
                     return None, True
+                except Exception as e :
+                    retry = await self.__error_handler.revise(python_code, e)
+                    if retry:
+                        continue
+                    return None, True
 
-            self.__result_trace.solver_output = f"{stdout}{stderr}"
+            self.__result_trace.solver_output = f"{stdout}\n{stderr}"
             self.__result_trace.solver_exit_code = solver_exit_code
 
             solver_outcome, output = self.__engine_strategy.parse_solver_output(
-                solver_exit_code, stdout, stderr
+                solver_exit_code, (stdout, *preprocessed[1:] ), stderr
             )
+
             match solver_outcome:
                 case SolverOutcome.SUCCESS:
                     return output, False
                 case SolverOutcome.FATAL:
-                    self.__result_trace.num_solver_errors += 1
+
+                    await self.__prompt_reviser.revise(
+                        os.linesep.join(self.__engine_strategy.constraints_prompt),
+                        self.__result_trace.python_code,
+                        stderr
+                    )
+
+                    retry = await self.__error_handler.revise(python_code, stderr)
+                    if retry:
+                        continue
+
                     return None, True
+
                 case SolverOutcome.RETRY:
                     attempts += 1
                     if attempts >= RETRY_COUNT:
@@ -297,13 +337,16 @@ Constraints:
         formatted_solution: Optional[str]
         if format_prompt:
             self.__client.add_message(format_prompt, Role.USER)
+            start = time.perf_counter()
             formatted_solution = await self.__receive_code_response(
                 "formatted solution"
             )
+            end = time.perf_counter()
+            self.__result_trace.format_time = end - start
         else:
             formatted_solution = solution
 
-        self.__result_trace.solution = formatted_solution
+        return  formatted_solution
 
     async def __receive_code_response(
         self, expected_content_description: str
@@ -367,4 +410,10 @@ Constraints:
                     pos = code_marker.start() + 1
 
         groups: Optional[Match] = CODE_EXTRACTION_PATTERN.match(response_text)
-        return groups.group(1) if groups is not None else None
+        if groups is None :
+            try:
+                return json.loads(response_text)
+            except:
+                return None
+
+        return groups.group(1)

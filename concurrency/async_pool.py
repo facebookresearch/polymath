@@ -29,7 +29,7 @@ class AsyncPool:
         configured maximum concurrency. This method is not concurrency safe, it
         is expected that it is invoked from one central management task/thread.
         """
-        while len(self.__tasks) > self.__max_concurrency:
+        while len(self.__tasks) >= self.__max_concurrency:
             _, self.__tasks = await wait(self.__tasks, return_when=FIRST_COMPLETED)
         self.__tasks.add(create_task(task()))
 
