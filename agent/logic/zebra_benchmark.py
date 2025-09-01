@@ -16,7 +16,9 @@ from typing import Any, Callable, Optional, Tuple
 import aiofiles
 
 from agent.logic.agent import LogicAgent
-from agent.logic.cbmc_search_engine_strategy import CBMCSearchEngineStrategy
+from agent.logic.engine_strategy_factory import EngineStrategyFactory
+from agent.logic.engine_strategy_factory import CbmcStrategyFactory
+from agent.logic.engine_strategy_factory import PrologStrategyFactory
 from agent.logic.engine_strategy import EngineStrategy
 from agent.logic.model_only import ModelOnlySolver
 from aiofiles.base import AiofilesContextManager
@@ -52,6 +54,7 @@ class ZebraBenchmark:
         eval_json_file_name: str,
         generator: str,
         model_name: str,
+        solver_factory: EngineStrategyFactory,
         enable_stderr_log: bool = True,
         generate_training_data: bool = False,
         zebra_input_dataset_path: Optional[str] = None,
@@ -63,6 +66,8 @@ class ZebraBenchmark:
             eval_json_file_name (str): Result JSON output file.
             generator (str): Generator name used in ZebraLogic leader board.
             model_name (str): Name of model to use in inference client.
+            solver_factory (EngineStrategyFactory): Factory instance responsible
+            for producing the engine strategy.
             enable_stderr_log (bool): Indicates whether log messages should be
             writting to stderr as well as the result JSON. Disabled for unit
             tests.
@@ -82,6 +87,7 @@ class ZebraBenchmark:
         self.__generator: str = generator
         self.__model_name: str = model_name
         self.__model_only: bool = model_only
+        self.__solver_factory = solver_factory
         self.__enable_stderr_log: bool = enable_stderr_log
         self.__filter_dataset: Callable[[dict[str, Any]], bool] = filter_dataset
         self.__output_dataset_context: Optional[AiofilesContextManager] = (
@@ -154,7 +160,7 @@ class ZebraBenchmark:
         log_stream = StringIO()
         result_trace = ResultTrace(task_id)
         with LoggerFactory(log_stream, self.__enable_stderr_log) as logger_factory:
-            engine_strategy: EngineStrategy = CBMCSearchEngineStrategy(
+            engine_strategy: EngineStrategy = self.__solver_factory.create(
                 logger_factory, puzzle, output_format
             )
             async with create_chat_completion(
@@ -404,11 +410,13 @@ async def main():
             "gpt-4o-evals2",
         ),
     ]
+    solver_factory: EngineStrategyFactory = CbmcStrategyFactory()
     for model in models:
         async with ZebraBenchmark(
             model[0],
             model[1],
             model[2],
+            solver_factory,
         ) as benchmark:
             await benchmark.run()
 

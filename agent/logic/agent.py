@@ -10,17 +10,14 @@ from re import compile, DOTALL, Match, Pattern
 from tempfile import gettempdir
 from typing import Callable, Optional, Tuple
 
-from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
+from agent.logic.engine_strategy import EngineStrategy, SolverOutcome, SolverConstraints
 from agent.logic.solver import Solver
-from agent.symex.module_with_type_info_factory import ModuleWithTypeInfoFactory
 from aiofiles.tempfile import NamedTemporaryFile
 from concurrency.subprocess import Subprocess
 from inference.chat_completion import ChatCompletion, Role
 from inference.client import InferenceClient
 
 from judge.result_trace import ResultTrace
-
-from libcst import MetadataWrapper, Module, parse_module, ParserSyntaxError
 
 
 # Sent if an expected code snippet was not found.
@@ -58,7 +55,6 @@ class LogicAgent(Solver):
         chat_completion: ChatCompletion,
         engine_strategy: EngineStrategy,
         result_trace: ResultTrace,
-        collect_pyre_type_information: bool = False,
     ) -> None:
         """
         Initialises inference client with default settings and the provided
@@ -79,7 +75,6 @@ class LogicAgent(Solver):
         self.__engine_strategy: EngineStrategy = engine_strategy
         self.__client = InferenceClient(logger_factory, chat_completion)
         self.__result_trace: ResultTrace = result_trace
-        self.__collect_pyre_type_information: bool = collect_pyre_type_information
 
     async def solve(self) -> None:
         """
@@ -127,6 +122,7 @@ Constraints:
         spreading Python code across mutltiple messages.
         """
         data_structure: Optional[str] = await self.__generate_data_structure()
+
         if not data_structure:
             return False
 
@@ -189,34 +185,29 @@ Constraints:
                     return None, False
                 all_constraints.append(constraints)
 
-            python_code: str = f"""
+            code: str = f"""
 {self.__engine_strategy.python_code_prefix}
 {data_structure}
 {os.linesep.join(all_constraints)}
 """
-            self.__result_trace.python_code = python_code
+            self.__result_trace.python_code = code
 
-            module: Module
-            metadata: Optional[MetadataWrapper]
             try:
-                if self.__collect_pyre_type_information:
-                    metadata = await ModuleWithTypeInfoFactory.create_module(
-                        python_code
-                    )
-                    module = metadata.module
-                else:
-                    module = parse_module(python_code)
-                    metadata = None
-            except ParserSyntaxError:
-                self.__logger.exception("Parser error when reading constraint")
+                solverSpec: Optional[SolverConstraints] = (
+                await self.__engine_strategy.generate_solver_constraints(
+                   code
+                )
+            )
+
+            except Exception as e:
+                self.__logger.exception(f"Parser error when reading constraint: {e}")
                 self.__result_trace.num_logic_py_syntax_errors += 1
                 return None, True
 
-            solver_constraints: str = (
-                await self.__engine_strategy.generate_solver_constraints(
-                    module, metadata
-                )
-            )
+            if not solverSpec:
+                return None, False
+
+            solver_constraints = solverSpec.content
             self.__result_trace.solver_constraints = solver_constraints
 
             solver_input_file_suffix: str = (
@@ -226,7 +217,7 @@ Constraints:
             stdout: str
             stderr: str
             async with NamedTemporaryFile(
-                mode="w", suffix=solver_input_file_suffix, delete_on_close=False
+                mode="w", suffix=solver_input_file_suffix, delete=False
             ) as file:
                 await file.write(solver_constraints)
                 await file.close()
@@ -254,9 +245,12 @@ Constraints:
 
             self.__result_trace.solver_output = f"{stdout}{stderr}"
             self.__result_trace.solver_exit_code = solver_exit_code
+            if not stdout:
+                return None, True
+            solverSpec.content = stdout
 
             solver_outcome, output = self.__engine_strategy.parse_solver_output(
-                solver_exit_code, stdout, stderr
+                solver_exit_code, solverSpec, stderr
             )
             match solver_outcome:
                 case SolverOutcome.SUCCESS:
