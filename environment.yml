@@ -4,29 +4,29 @@ channels:
 dependencies:
   # CBMC
   - bison=3.8.2
-  - cmake=3.31.2
-  - curl=8.11.1
+  - cmake=4.2.3
+  - curl=8.18.0
   - flex=2.6.4
-  - git=2.47.1
-  - gxx=14.2.0
+  - git=2.51.0
+  - gxx=15.2.0
   - make=4.4.1
-  - patch=2.7.6
+  - patch=2.8
 
   # libCST
-  - hatch=1.14.0
-  - rust=1.83.0
+  - hatch=1.16.3
+  - rust=1.90.0
 
   # Polymath
-  - python=3.13
-  - aiocsv=1.3.2
+  - python=3.14.2
+  - aiocsv=1.4.0
   - aiofiles=24.1.0
-  - aiohttp=3.11.11
-  - fastapi=0.115.9
-  - huggingface_hub=0.27.1
-  - pip=24.3.1
-  - pyarrow=19.0.1
-  - python-dotenv=1.0.1
-  - networkx=3.4.2
+  - aiohttp=3.13.3
+  - fastapi=0.128.0
+  - huggingface_hub=1.3.3
+  - pip=26.0.1
+  - pyarrow=21.0.0
+  - python-dotenv=1.2.1
+  - networkx=3.6.1
   - pip:
-    - openapi-generator-cli[jdk4py]==7.11.0.post0
-    - pyre-check==0.9.23
+    - openapi-generator-cli[jdk4py]==7.19.0
+    - pyre-check==0.9.25
