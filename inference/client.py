@@ -6,10 +6,9 @@
 
 import asyncio
 from logging import Logger
-from random import randrange
 from typing import Callable, Optional
 
-from inference.chat_completion import ChatCompletion, Message, Role
+from inference.chat_completion import ChatCompletion, ChatCompletionResult, Message, Role
 from inference.finish_reason import FinishReason
 
 
@@ -45,21 +44,20 @@ class InferenceClient:
         attempt: int = 0
         multi_message_ai_response: str = ""
         while True:
-            finish_reason, ai_response = await self.__chat_completion.create(
+            result: ChatCompletionResult = await self.__chat_completion.create(
                 self.conversation
             )
-            if finish_reason == FinishReason.RETRYABLE_ERROR:
+            if result.finish_reason == FinishReason.RETRYABLE_ERROR:
                 attempt += 1
                 if attempt >= RETRY_LIMIT:
                     self.__logger.error("Chat completion API errors occurred.")
                     return None
 
-                wait_time: int = randrange(30, 46)
-                await asyncio.sleep(wait_time)
+                await asyncio.sleep(result.retry_after)
                 continue
 
-            ai_response = ai_response or ""
-            if finish_reason == FinishReason.MAX_OUTPUT_TOKENS:
+            ai_response: str = result.text or ""
+            if result.finish_reason == FinishReason.MAX_OUTPUT_TOKENS:
                 attempt += 1
                 if attempt >= RETRY_LIMIT:
                     self.__logger.error(
