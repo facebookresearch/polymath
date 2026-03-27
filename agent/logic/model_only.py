@@ -11,7 +11,7 @@ from typing import Callable, Optional
 
 from agent.logic.agent import RETRY_COUNT
 from agent.logic.solver import Solver
-from inference.chat_completion import ChatCompletion, Message, Role
+from inference.chat_completion import ChatCompletion, ChatCompletionResult, Message, Role
 from inference.finish_reason import FinishReason
 from judge.result_trace import ResultTrace
 
@@ -83,12 +83,14 @@ class ModelOnlySolver(Solver):
 
         assistant_message: str = ""
         for _ in range(RETRY_COUNT):
-            finish_reason, response = await self.__chat_completion.create(messages)
-            if response is not None:
-                assistant_message += response
+            result: ChatCompletionResult = await self.__chat_completion.create(
+                messages
+            )
+            if result.text is not None:
+                assistant_message += result.text
                 messages.append(Message(Role.AI, assistant_message))
 
-            match finish_reason:
+            match result.finish_reason:
                 case FinishReason.MAX_OUTPUT_TOKENS:
                     self.__logger.warning(
                         "Encountered token limit, asking model to continue..."

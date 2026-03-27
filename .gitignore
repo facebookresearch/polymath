@@ -1,5 +1,8 @@
 __pycache__
 .env
+.pyre
+.pyre_configuration
+.watchmanconfig
 .vscode
 *.aux
 *.bbl

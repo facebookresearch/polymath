@@ -11,9 +11,9 @@ from agent.logic.logic_py_smt_data_structure_generator import (
     LogicPySMTDataStructureGenerator,
 )
 from agent.logic.z3_conclusion_check_engine_strategy import _PYTHON_CODE_PREFIX
-
 from agent.symex.module_with_type_info_factory import ModuleWithTypeInfoFactory
-from libcst import MetadataWrapper
+from agent.symex.propagate_unique import PropagateUnique
+from libcst import MetadataWrapper, Module
 
 
 class TestLogicPySMTConstraintGenerator(IsolatedAsyncioTestCase):
@@ -1023,11 +1023,11 @@ def premise(universe: Universe) -> None:
             """(assert
   (and
     (=
-      (__attribute_Person_name 0)
-      "Peter"
+      (__attribute_Universe_persons 0)
+      (__attribute_Universe_persons 0)
     )
     (=
-      (__attribute_Person_age 0)
+      (__attribute_Person_age (__attribute_Universe_persons 0))
       35
     )
     (forall
@@ -1043,7 +1043,7 @@ def premise(universe: Universe) -> None:
               )
               (=
                 __0__0__person
-                0
+                (__attribute_Universe_persons 0)
               )
             )
           )
@@ -1051,7 +1051,7 @@ def premise(universe: Universe) -> None:
             (=>
               (=
                 __0__0__person
-                0
+                (__attribute_Universe_persons 0)
               )
               (>
                 (__attribute_Person_age __0__0__person)
@@ -1063,7 +1063,7 @@ def premise(universe: Universe) -> None:
             (=>
               (=
                 __0__0__person
-                0
+                (__attribute_Universe_persons 0)
               )
               (>
                 (__attribute_Person_age __0__0__person)
@@ -1088,11 +1088,19 @@ def premise(universe: Universe) -> None:
 )
 (check-sat)
 """,
+            preprocess=True,
         )
 
-    async def __test_harness(self, code: str, expected_harness: str) -> None:
+    async def __test_harness(
+        self, code: str, expected_harness: str, preprocess: bool = False
+    ) -> None:
         harness: str = _PYTHON_CODE_PREFIX + code
         module: MetadataWrapper = await ModuleWithTypeInfoFactory.create_module(harness)
+        if preprocess:
+            preprocessed: Module = await PropagateUnique.preprocess(module)
+            module: MetadataWrapper = await ModuleWithTypeInfoFactory.create_module(
+                preprocessed.code
+            )
         data_structure = LogicPySMTDataStructureGenerator()
         module.visit(data_structure)
         constraints = LogicPySMTConstraintGenerator(

@@ -5,9 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 from types import TracebackType
-from typing import Optional, Tuple
+from typing import Optional
 
-from inference.chat_completion import ChatCompletion
+from inference.chat_completion import ChatCompletion, ChatCompletionResult
 from inference.finish_reason import FinishReason
 
 
@@ -31,7 +31,7 @@ class MockChatCompletion(ChatCompletion):
 
     async def create(
         self, conversation: list[dict[str, str]]
-    ) -> Tuple[FinishReason, Optional[str]]:
+    ) -> ChatCompletionResult:
         """
         Sends the given conversation to chat completions inference back-end.
         This is just a dummy implementation. You should create your own
@@ -39,9 +39,9 @@ class MockChatCompletion(ChatCompletion):
         will provide some default implementations for this class in the future,
         e.g. for the OpenAI API.
 
-        Returns: Tuple of finish reason and LLM response text.
+        Returns: Result containing finish reason and LLM response text.
         """
         self.__conversations.append(conversation)
         answer: str = self.__answers[self.__answer_index]
         self.__answer_index += 1
-        return FinishReason.STOPPED, answer
+        return ChatCompletionResult(FinishReason.STOPPED, answer)

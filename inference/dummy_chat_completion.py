@@ -6,9 +6,9 @@
 
 from logging import Logger
 from types import TracebackType
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional
 
-from inference.chat_completion import ChatCompletion, Message
+from inference.chat_completion import ChatCompletion, ChatCompletionResult, Message
 from inference.finish_reason import FinishReason
 
 
@@ -47,5 +47,5 @@ class DummyChatCompletion(ChatCompletion):
 
     async def create(
         self, conversation: list[Message]
-    ) -> Tuple[FinishReason, Optional[str]]:
-        return FinishReason.STOPPED, "Hello! I am very intelligent!"
+    ) -> ChatCompletionResult:
+        return ChatCompletionResult(FinishReason.STOPPED, "Hello! I am very intelligent!")

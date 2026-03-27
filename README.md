@@ -32,7 +32,7 @@ conda activate polymath
 
 3) Log into your huggingface account to download datasets:
 ```bash
-huggingface-cli login
+hf auth login
 ```
 
 On HuggingFace, you need to request access to the following two datasets. Access
