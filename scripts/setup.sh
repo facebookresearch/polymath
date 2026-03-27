@@ -73,6 +73,6 @@ popd
 ## Download FOLIO dataset
 mkdir $script_dir/../datasets 2>/dev/null
 pushd $script_dir/../datasets
-huggingface-cli download --repo-type dataset allenai/ZebraLogicBench-private grid_mode/test-00000-of-00001.parquet --local-dir .
-huggingface-cli download --repo-type dataset yale-nlp/FOLIO folio_v2_train.jsonl folio_v2_validation.jsonl --local-dir .
+hf download --repo-type dataset allenai/ZebraLogicBench-private grid_mode/test-00000-of-00001.parquet --local-dir .
+hf download --repo-type dataset yale-nlp/FOLIO folio_v2_train.jsonl folio_v2_validation.jsonl --local-dir .
 popd

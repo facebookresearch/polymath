@@ -4,9 +4,10 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
 from asyncio import create_subprocess_exec
 from asyncio.subprocess import PIPE, Process
+from os import chdir, getcwd
+from os.path import join, realpath
 from types import TracebackType
 from typing import Optional
 
@@ -81,7 +82,8 @@ class ModuleWithTypeInfoFactory:
             libCST module with type information.
         """
         async with TemporaryDirectory() as project_directory:
-            module_file_name: str = os.path.join(project_directory, _MODULE_NAME)
+            project_directory = realpath(project_directory)
+            module_file_name: str = join(project_directory, _MODULE_NAME)
             async with aiofiles.open(module_file_name, mode="w") as file:
                 await file.write(code.replace(" inclusive_or ", " or        "))
 
@@ -91,7 +93,15 @@ class ModuleWithTypeInfoFactory:
                     [_MODULE_NAME],
                     [TypeInferenceProvider],
                 )
+                # libcst's TypeInferenceProvider runs `pyre query` without
+                # specifying cwd, so pyre connects to whichever server owns
+                # the current working directory.  We must temporarily chdir
+                # into the temp project so it reaches the right server.
+                original_cwd: str = getcwd()
+                try:
+                    chdir(project_directory)
+                    cache = full_repo_manager.get_cache_for_path(_MODULE_NAME)
+                finally:
+                    chdir(original_cwd)
                 module: Module = parse_module(code)
-                return MetadataWrapper(
-                    module, True, full_repo_manager.get_cache_for_path(_MODULE_NAME)
-                )
+                return MetadataWrapper(module, True, cache)
