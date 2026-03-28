@@ -165,10 +165,10 @@ class CBMCSearchEngineStrategy(EngineStrategy):
         )
 
     def parse_solver_output(
-        self, exit_code: int, stdout: SolverConstraints, stderr: str
+            self, exit_code: int, solverSpec: SolverConstraints, stdout: str, stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         if exit_code == 10:
-            cbmc_json_output: Any = loads(stdout.content)
+            cbmc_json_output: Any = loads(stdout)
             parsed_output: str = CBMCSearchEngineStrategy.__parse_cbmc_solution(
                 cbmc_json_output
             )

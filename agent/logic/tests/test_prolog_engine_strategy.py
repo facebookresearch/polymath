@@ -1,3 +1,9 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
+
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 from agent.logic.prolog_engine_strategy import PrologEngineStrategy
@@ -35,9 +41,10 @@ class TestPrologEngineStrategy(IsolatedAsyncioTestCase):
 
     def test_parse_solver_output_success(self):
         strategy = PrologEngineStrategy(self.logger_factory, "puzzle text", "json")
-        stdout = SolverConstraints("[1,2]", ["Alice", "Bob"], 2)
+        solverSpec = SolverConstraints("code", ["Alice", "Bob"], 2)
+        stdout = "[1,2]"
         exit_code = 0
-        outcome, res = strategy.parse_solver_output(exit_code, stdout, "")
+        outcome, res = strategy.parse_solver_output(exit_code,solverSpec, stdout, "")
         self.assertEqual(outcome, SolverOutcome.SUCCESS)
         self.assertIsNotNone(res, "Result should not be None")
         assert res is not None
@@ -47,9 +54,10 @@ class TestPrologEngineStrategy(IsolatedAsyncioTestCase):
     def test_parse_solver_output_failure(self):
         mock_logger = Mock()
         strategy = PrologEngineStrategy(lambda _: mock_logger, "puzzle text", "json")
-        stdout = SolverConstraints("", [], 0)
+        solverSpec = SolverConstraints("code", [], 0)
+        stdout = ""
         exit_code = 1
-        outcome, res = strategy.parse_solver_output(exit_code, stdout, "error")
+        outcome, res = strategy.parse_solver_output(exit_code,solverSpec, stdout, "error")
         self.assertEqual(outcome, SolverOutcome.FATAL)
         self.assertIsNone(res)
         mock_logger.error.assert_called_once()
@@ -154,12 +162,8 @@ class TestPrologEngineStrategy(IsolatedAsyncioTestCase):
                          ]
 
         exit_code = 0
-        stdout = SolverConstraints(
-            str(expected_vars),
-            solver_spec.variables,
-            solver_spec.nb_categories
-        )
-        outcome, res = strategy.parse_solver_output(exit_code, stdout, "")
+        stdout = str(expected_vars)
+        outcome, res = strategy.parse_solver_output(exit_code, solver_spec, stdout, "")
         self.assertEqual(outcome, SolverOutcome.SUCCESS)
 
         expected_res = "1 - Alice, HipHop, Penny, Fred, VeryShort, Dog\n2 - Peter, Classical, Holly, AliceChild, SuperTall, Rabbit\n3 - Carol, Country, Aniya, Bella, Tall, Horse\n4 - Bob, Pop, Kailyn, Timothy, Short, Cat\n5 - Eric, Rock, Janelle, Meredith, VeryTall, Fish\n6 - Arnold, Jazz, Sarah, Samantha, Average, Bird"

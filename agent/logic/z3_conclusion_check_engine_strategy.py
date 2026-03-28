@@ -283,11 +283,11 @@ class Z3ConclusionCheckEngineStrategy(EngineStrategy):
         return None
 
     def parse_solver_output(
-        self, exit_code: int, stdout: SolverConstraints, stderr: str
+            self, exit_code: int, solverSpec: SolverConstraints, stdout: str, stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         if exit_code == 0:
             output: str
-            match stdout.content:
+            match stdout:
                 case z3_output_patterns._FALSE:
                     output = "False"
                 case z3_output_patterns._RETRY:

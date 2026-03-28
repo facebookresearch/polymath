@@ -1,3 +1,9 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
+
 from abc import ABC, abstractmethod
 from agent.logic.prolog_engine_strategy import PrologEngineStrategy
 from agent.logic.cbmc_search_engine_strategy import CBMCSearchEngineStrategy

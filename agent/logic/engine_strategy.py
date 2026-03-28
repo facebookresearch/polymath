@@ -114,7 +114,7 @@ class EngineStrategy(ABC):
 
     @abstractmethod
     def parse_solver_output(
-        self, exit_code: int, stdout: SolverConstraints , stderr: str
+            self, exit_code: int, solverSpec: SolverConstraints, stdout: str , stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         """
         Interprets the result of the constraint solver subprocess invocation.
@@ -124,9 +124,10 @@ class EngineStrategy(ABC):
 
         Args:
             exit_code (int): Constraint solver subprocess exit code.
-            stdout (SolverConstraints): Standard output of constraint solver subprocess;
-                first element is always the solver output string. For Prolog, subsequent elements
-                are extracted variables and number of categories.
+            solverSpec (SolverConstraints): The original solver constraints used as input.
+                This is used by Prolog to access additional metadata 
+                (variables, nb_categories) needed to reconstruct the solution.
+            stdout (str): Standard output of constraint solver subprocess.
             stderr (str): Standard error output of constraint solver subprocess.
         Returns:
             A tuple where the first element indicates the outcome (i.e. whether

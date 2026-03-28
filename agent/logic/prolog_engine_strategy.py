@@ -1,3 +1,9 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
+
 from logging import Logger
 from typing import Any, Callable, Optional, Tuple, List
 import ast
@@ -158,13 +164,18 @@ class PrologEngineStrategy(EngineStrategy):
         )
 
     def parse_solver_output(
-        self, exit_code: int, stdout: SolverConstraints, stderr: str
+            self, exit_code: int, solverSpec: SolverConstraints, stdout: str, stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
-        ret = stdout.content
+        
         if exit_code == 0:
-            ints = ast.literal_eval(ret)
-            vars : list[str] = stdout.variables
-            n : int = stdout.nb_categories
+            if solverSpec.variables is None or solverSpec.nb_categories is None:
+                self.__logger.error(
+                    "SolverConstraints is missing required fields: 'variables' and 'nb_categories' must be set."
+                )   
+                return SolverOutcome.FATAL, None
+            ints = ast.literal_eval(stdout)
+            vars : list[str] = solverSpec.variables
+            n : int = solverSpec.nb_categories
             res = PrologEngineStrategy._parse_prolog_solution(ints, vars, n)
             return SolverOutcome.SUCCESS, res
 

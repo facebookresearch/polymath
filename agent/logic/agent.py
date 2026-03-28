@@ -67,9 +67,6 @@ class LogicAgent(Solver):
             engine_strategy (EngineStrategy): Agent configuration (e.g. CBMC
             search or SMT conclusion check).
             result_trace (ResultTrace): Sink for debug and result output data.
-            collect_pyre_type_information (bool): Whether libCST modules should
-            be parsed with type information. This incurs a performance overhead,
-            but is necessary for the Z3 back-end.
         """
         self.__logger: Logger = logger_factory(__name__)
         self.__engine_strategy: EngineStrategy = engine_strategy
@@ -247,10 +244,9 @@ Constraints:
             self.__result_trace.solver_exit_code = solver_exit_code
             if not stdout:
                 return None, True
-            solverSpec.content = stdout
 
             solver_outcome, output = self.__engine_strategy.parse_solver_output(
-                solver_exit_code, solverSpec, stderr
+                solver_exit_code, solverSpec, stdout, stderr
             )
             match solver_outcome:
                 case SolverOutcome.SUCCESS:
