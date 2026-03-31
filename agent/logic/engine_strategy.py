@@ -6,9 +6,8 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, Tuple
-
-from libcst import MetadataWrapper, Module
+from typing import Optional, Tuple, List
+from dataclasses import dataclass
 
 
 class SolverOutcome(Enum):
@@ -30,6 +29,11 @@ class SolverOutcome(Enum):
     # using this response.
     RETRY = 3
 
+@dataclass
+class SolverConstraints:
+    content : str
+    variables: Optional[List[str]] = None
+    nb_categories: Optional[int] = None
 
 class EngineStrategy(ABC):
     """
@@ -62,8 +66,8 @@ class EngineStrategy(ABC):
 
     @abstractmethod
     async def generate_solver_constraints(
-        self, module: Module, metadata: Optional[MetadataWrapper]
-    ) -> str:
+            self, code: str
+    ) -> Optional[SolverConstraints]:
         """
         All supported solvers are invoked using a CLI interface (e.g. `cbmc`,
         `z3`). This method generates constraints for the implemented solver
@@ -71,9 +75,12 @@ class EngineStrategy(ABC):
         solver in a subsequent step.
 
         Args:
-            module (Module): Logic.py Python module to translate.
+            code (str): Logic.py code or puzzle description to translate.
+
         Returns:
-            Solver-specific constraints to later pass into solver engine.
+            Optional[Solverconstraints]:
+            - First element: code ready for the solver.
+            - additional elements: only for Prolog (extracted variables and number of categories).
         """
         ...
 
@@ -107,13 +114,19 @@ class EngineStrategy(ABC):
 
     @abstractmethod
     def parse_solver_output(
-        self, exit_code: int, stdout: str, stderr: str
+            self, exit_code: int, solverSpec: SolverConstraints, stdout: str , stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         """
         Interprets the result of the constraint solver subprocess invocation.
 
+        For Prolog, stdout contains additional metadata (extracted variables and number of categories)
+        needed to reconstruct the solution. Other solvers return only the transformed code.
+
         Args:
             exit_code (int): Constraint solver subprocess exit code.
+            solverSpec (SolverConstraints): The original solver constraints used as input.
+                This is used by Prolog to access additional metadata 
+                (variables, nb_categories) needed to reconstruct the solution.
             stdout (str): Standard output of constraint solver subprocess.
             stderr (str): Standard error output of constraint solver subprocess.
         Returns:

@@ -9,9 +9,9 @@ from json import loads
 from logging import Logger
 from typing import Any, Callable, Optional, Tuple
 
-from agent.logic.engine_strategy import EngineStrategy, SolverOutcome
+from agent.logic.engine_strategy import EngineStrategy, SolverOutcome, SolverConstraints
 from agent.logic.logic_py_c_harness_generator import LogicPyCHarnessGenerator
-from libcst import MetadataWrapper, Module
+from libcst import MetadataWrapper, Module, parse_module
 
 
 # Instructs the model to generate the solution constraints.
@@ -80,7 +80,7 @@ I will walk you through these steps one by one. Do not attempt to solve the puzz
 Your solver tool allows you to specify the output solution type as Python classes, with a few additional features:
 
 * Just like in SQL, each field can be marked as unique, meaning no two instances of the class can have the same value, e.g.: `id: Unique[int]`
-* Each field can have a value constraint assigned to it, such that only these values are allowed, e.g.: `id: Domain[int, range(1, 11)]` allows id values between 1 (inclusive) and 11 (exclusive), or `name: Domain[str, \"John\", \"Jane\", \"Peter\"]` allows only the strings \"John\", \"Jane\", or \"Peter\". 
+* Each field can have a value constraint assigned to it, such that only these values are allowed, e.g.: `id: Domain[int, range(1, 11)]` allows id values between 1 (inclusive) and 11 (exclusive), or `name: Domain[str, \"John\", \"Jane\", \"Peter\"]` allows only the strings \"John\", \"Jane\", or \"Peter\".
 * The `list` type allows for a second type argument specifying the size, e.g.: `list[int, 10]`.
 
 Here is an example that uses these features in combination:
@@ -136,9 +136,18 @@ class CBMCSearchEngineStrategy(EngineStrategy):
         return _SYSTEM_PROMPT.format(self.__output_format)
 
     async def generate_solver_constraints(
-        self, module: Module, metadata: Optional[MetadataWrapper]
-    ) -> str:
-        return LogicPyCHarnessGenerator.generate(module)
+        self, code: str
+    ) -> Optional[SolverConstraints]:
+
+        module: Module
+        module = parse_module(code)
+
+        code = LogicPyCHarnessGenerator.generate(module)
+
+        if not code:
+            return None
+
+        return SolverConstraints(code)
 
     def generate_solver_invocation_command(self, solver_input_file: str) -> list[str]:
         return [
@@ -156,7 +165,7 @@ class CBMCSearchEngineStrategy(EngineStrategy):
         )
 
     def parse_solver_output(
-        self, exit_code: int, stdout: str, stderr: str
+            self, exit_code: int, solverSpec: SolverConstraints, stdout: str, stderr: str
     ) -> Tuple[SolverOutcome, Optional[str]]:
         if exit_code == 10:
             cbmc_json_output: Any = loads(stdout)

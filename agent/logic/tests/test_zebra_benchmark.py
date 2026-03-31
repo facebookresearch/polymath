@@ -11,6 +11,8 @@ from unittest import IsolatedAsyncioTestCase
 import aiofiles
 
 from agent.logic.zebra_benchmark import ZebraBenchmark
+from agent.logic.engine_strategy_factory import EngineStrategyFactory
+from agent.logic.engine_strategy_factory import CbmcStrategyFactory
 
 from dotenv import load_dotenv
 
@@ -165,10 +167,12 @@ class TestZebraBenchmark(IsolatedAsyncioTestCase):
         with NamedTemporaryFile() as eval_json_file:
             eval_json_file.close()
             eval_json_file_name: str = eval_json_file.name
+            solver_factory: EngineStrategyFactory = CbmcStrategyFactory()
             zebraBenchmark = ZebraBenchmark(
                 eval_json_file_name,
                 "meta-llama/Meta-Llama-3.1-70B-Instruct@reasoning",
                 "llama3-70b-instruct",
+                solver_factory,
                 True,
                 False,
                 None,

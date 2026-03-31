@@ -145,7 +145,7 @@ class FOLIOBenchmark:
                 logger_factory, self.__model_name
             ) as chat_completion:
                 agent = LogicAgent(
-                    logger_factory, chat_completion, engine_strategy, result_trace, True
+                    logger_factory, chat_completion, engine_strategy, result_trace
                 )
                 await agent.solve()
         traces[task_id] = result_trace
